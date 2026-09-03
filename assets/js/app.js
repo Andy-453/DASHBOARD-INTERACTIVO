@@ -71,6 +71,7 @@ window.App = {
   renderPipeline: renderPipeline, toggleSec: toggleSec,
   // Indicadores
   renderIndicadores: renderIndicadores, renderIndicadorRCDetalle: renderIndicadorRCDetalle,
+  renderIndicadorProfDetalle: renderIndicadorProfDetalle, profSetTipo: profSetTipo,
   // Almacenamiento
   loadDB: loadDB, saveDB: saveDB, downloadHTML: downloadHTML, downloadDB: downloadDB, resetDB: resetDB,
   backupDB: backupDB, restoreDB: restoreDB,

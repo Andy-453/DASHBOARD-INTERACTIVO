@@ -54,6 +54,16 @@ var __ACTIONS = {
     var o = document.getElementById('rc-detail-overlay');
     if(o && o.parentNode) document.body.removeChild(o);
   },
+  'prof-show-detail': function(b){
+    renderIndicadorProfDetalle(b.getAttribute('data-filter'));
+  },
+  'prof-close-detail': function(){
+    var o = document.getElementById('prof-detail-overlay');
+    if(o && o.parentNode) document.body.removeChild(o);
+  },
+  'prof-filter-type': function(b){
+    profSetTipo(b.getAttribute('data-tipo'));
+  },
   'toggle-sedes-list': function(b){ toggleSedesList(b.getAttribute('data-pid')); },
   'select-sede-prog': function(b){ setSedeProg(b.getAttribute('data-pid'), b.getAttribute('data-sede')); },
   'toggle-mae': function(b){ toggleMaeNode(b.getAttribute('data-key')); },

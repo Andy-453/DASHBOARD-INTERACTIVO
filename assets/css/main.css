@@ -233,7 +233,7 @@ button:active{transform:scale(.98)}
 .rc-title-sub{font-size:9px;color:#77848a;margin-bottom:14px;letter-spacing:.02em}
 
 /* ── KPIs: fondo pastel semántico, número dominante, sin bordes ── */
-.rc-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.rc-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .rc-kpi{border:none;border-radius:12px;padding:12px 10px;text-align:center}
 .rc-kpi-v{font-size:24px;font-weight:800;line-height:1.1}
 .rc-kpi-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:3px;line-height:1.3;opacity:.85}
@@ -241,18 +241,19 @@ button:active{transform:scale(.98)}
 .rc-kpi-total .rc-kpi-v{color:var(--rc-total-tx)}
 .rc-kpi-con{background:var(--rc-turq-bg)}
 .rc-kpi-con .rc-kpi-v{color:var(--rc-turq-tx)}
-.rc-kpi-sin{background:var(--rc-rojo-bg)}
-.rc-kpi-sin .rc-kpi-v{color:var(--rc-rojo-tx)}
-.rc-kpi-proysin{background:var(--rc-ambar-bg)}
-.rc-kpi-proysin .rc-kpi-v{color:var(--rc-ambar-tx)}
+.rc-kpi-proy{background:var(--rc-ambar-bg)}
+.rc-kpi-proy .rc-kpi-v{color:var(--rc-ambar-tx)}
 
 /* ── Tabla global reutiliza .tbl-wrap + .tbl ── */
-.rc-tbl-min{min-width:760px}
+.rc-tbl-min{min-width:520px}
 .rc-th-c{text-align:center}
+/* Primera columna "Estado Actual Posgrado" a la izquierda; columnas numéricas centradas */
+.rc-summary-tbl th,
+.rc-summary-tbl td{text-align:center}
+.rc-summary-tbl th:first-child,
+.rc-summary-tbl td:first-child{text-align:left}
 .rc-txt-green{color:var(--rc-turq-tx)!important;font-weight:600}
-.rc-txt-alert{color:var(--rc-rojo-tx)!important;font-weight:600}
 .rc-txt-gold{color:var(--rc-ambar-tx)!important;font-weight:600}
-.rc-txt-gold-bold{color:var(--rc-ambar-tx)!important;font-weight:700}
 .rc-txt-dark{color:var(--udec-dark);font-weight:600}
 .rc-row-total{background:var(--udec-green);color:#fff;font-weight:700}
 .rc-row-total td{border-bottom:none!important}
@@ -266,33 +267,45 @@ button:active{transform:scale(.98)}
 .rc-card-total b{font-size:13px;color:var(--udec-dark)}
 .rc-card-body{padding:12px 14px}
 
-/* ── CON / SIN RC: alto peso visual ── */
-.rc-tile{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:9px;margin-bottom:6px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+/* ── Visualizaciones Chart.js del indicador RC ── */
+.rc-chart-section-sub{margin-bottom:6px;font-weight:700;color:var(--udec-green);text-transform:none;letter-spacing:.02em}
+.rc-charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 16px}
+.rc-charts .rc-chart-card:last-child{grid-column:1 / -1}
+.rc-chart-card{background:#fff;border:1px solid #d8e8dc;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,102,51,0.06)}
+.rc-chart-head{font-size:10px;font-weight:700;color:var(--udec-green);text-transform:uppercase;letter-spacing:.08em;padding:11px 14px;border-bottom:1px solid #eef2ee;background:#fbfdfb}
+.rc-chart-sub{font-size:9.5px;font-weight:600;color:#66776f;padding:7px 14px 0;letter-spacing:.01em}
+.rc-chart-body{position:relative;padding:12px 14px;height:260px}
+.rc-chart-body-tall{height:292px}
+.rc-chart-body-dona{height:256px;display:flex;gap:18px;align-items:center;justify-content:flex-start;padding:12px 14px}
+.rc-dona-col{position:relative;flex:0 0 200px;width:200px;height:200px;text-align:center}
+.rc-dona-col canvas{max-width:200px;max-height:200px}
+.rc-rank-col{flex:1 1 auto;min-width:0}
+.rc-rank-head{display:flex;justify-content:space-between;font-size:8.5px;font-weight:700;color:#66776f;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #eef2ee;padding:2px 0 5px;margin-bottom:4px}
+.rc-rank-head span:nth-child(1){flex:1 1 auto;text-align:left}
+.rc-rank-head span:nth-child(n+2){flex:0 0 auto}
+.rc-rank-row{display:flex;align-items:center;justify-content:space-between;padding:4px 2px;font-size:10.5px;line-height:1.1}
+.rc-rank-row+.rc-rank-row{margin-top:2px}
+.rc-rank-dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;margin-right:6px}
+.rc-rank-name{flex:1 1 auto;text-align:left;font-weight:600;color:var(--udec-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-rank-num{flex:0 0 auto;text-align:right;min-width:16px;font-weight:800;color:var(--udec-green)}
+.rc-rank-pct{flex:0 0 auto;text-align:right;min-width:42px;font-weight:600;color:#66776f}
+.rc-doughnut-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);text-align:center;pointer-events:none;width:96px}
+.rc-doughnut-center-v{font-size:24px;font-weight:800;color:var(--udec-green);line-height:1}
+.rc-doughnut-center-l{font-size:7.5px;font-weight:600;color:#66776f;line-height:1.2;margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+
+/* ── Categorías: alto peso visual ── */
+.rc-tile{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:9px;margin-bottom:8px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.rc-tile:last-child{margin-bottom:0}
 .rc-tile:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,30,0,.10)}
-.rc-tile-label{font-size:10px;font-weight:800;color:var(--udec-dark);display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.05em}
-.rc-tile-num{font-size:17px;font-weight:800;line-height:1}
+.rc-tile-label{font-size:10px;font-weight:800;color:var(--udec-dark);display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.04em}
+.rc-tile-num{font-size:18px;font-weight:800;line-height:1}
 .rc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .rc-tile-con{background:var(--rc-turq-bg)}
 .rc-tile-con .rc-dot{background:var(--rc-turq-tx)}
 .rc-tile-con .rc-tile-num{color:var(--rc-turq-tx)}
-.rc-tile-sin{background:var(--rc-rojo-bg);margin-bottom:0}
-.rc-tile-sin .rc-dot{background:var(--rc-rojo-tx)}
-.rc-tile-sin .rc-tile-num{color:var(--rc-rojo-tx)}
-
-/* ── Matriz 2x2 estados: pastel, compactos, número protagonista ── */
-.rc-sub{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed #e3ebe5}
-.rc-cell{border-radius:9px;padding:6px 8px;text-align:center;cursor:pointer;transition:transform .15s,box-shadow .15s}
-.rc-cell:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,30,0,.10)}
-.rc-cell-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1.2;opacity:.9}
-.rc-cell-num{font-size:15px;font-weight:800;line-height:1.15;margin-top:2px}
-.rc-cell-vigcon{background:var(--rc-verde-bg)}
-.rc-cell-vigcon .rc-cell-label,.rc-cell-vigcon .rc-cell-num{color:var(--rc-verde-tx)}
-.rc-cell-vigsin{background:var(--rc-ambar-bg)}
-.rc-cell-vigsin .rc-cell-label,.rc-cell-vigsin .rc-cell-num{color:var(--rc-ambar-tx)}
-.rc-cell-proycon{background:var(--rc-azul-bg)}
-.rc-cell-proycon .rc-cell-label,.rc-cell-proycon .rc-cell-num{color:var(--rc-azul-tx)}
-.rc-cell-proysin{background:var(--rc-ambar-bg)}
-.rc-cell-proysin .rc-cell-label,.rc-cell-proysin .rc-cell-num{color:var(--rc-ambar-tx)}
+.rc-tile-sin{background:var(--rc-ambar-bg)}
+.rc-tile-sin .rc-dot{background:var(--rc-ambar-tx)}
+.rc-tile-sin .rc-tile-num{color:var(--rc-ambar-tx)}
 
 /* ── Modal detalle reutiliza .modal-overlay + .modal ── */
 .rc-overlay{position:fixed;inset:0;background:rgba(0,30,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:2rem;overflow-y:auto;cursor:pointer}
@@ -304,8 +317,9 @@ button:active{transform:scale(.98)}
 .rc-close-bottom{background:var(--udec-green);color:#fff;border:none;font-size:12px;font-weight:700;padding:9px 22px;border-radius:7px;cursor:pointer;transition:background .15s;margin-top:14px}
 .rc-close-bottom:hover{background:var(--udec-green-mid)}
 .rc-count{font-size:10px;color:#555;margin-bottom:8px}
+.rc-note{font-size:9px;color:#66736a;background:var(--rc-ambar-bg);border:1px solid #ecdfc0;border-radius:6px;padding:6px 10px;margin-bottom:10px;line-height:1.4}
 .rc-link{color:#0563C1;font-size:9px}
-.rc-nolink{color:var(--rc-rojo-tx);font-size:9px;font-weight:600}
+.rc-nolink{color:var(--rc-ambar-tx);font-size:9px;font-weight:600}
 .rc-modal-body{max-height:70vh;overflow:auto;padding-bottom:2px}
 .rc-modal-foot{display:flex;justify-content:flex-end;padding:0 6px 2px}
 
@@ -314,10 +328,21 @@ button:active{transform:scale(.98)}
 .rc-detail-tbl th,.rc-detail-tbl td{white-space:normal!important;vertical-align:top;word-break:break-word}
 .rc-detail-tbl .rc-link{white-space:nowrap}
 
+/* Filtro por tipo dentro del modal de Líneas de Profundización */
+.rc-filter-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.rc-filter-chip{background:#fff;border:1px solid #d8e8dc;color:var(--udec-green);font-size:10px;font-weight:700;padding:5px 12px;border-radius:16px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;font-family:inherit}
+.rc-filter-chip:hover{border-color:var(--udec-green)}
+.rc-filter-chip.on{background:var(--udec-green);color:#fff;border-color:var(--udec-green)}
+
 @media (max-width:768px){
-  .rc-kpi-row{grid-template-columns:repeat(2,1fr)}
+  .rc-kpi-row{grid-template-columns:repeat(3,1fr)}
   .rc-overlay{padding:1rem}
   .rc-grid{grid-template-columns:1fr}
+  .rc-charts{grid-template-columns:1fr}
+  .rc-charts .rc-chart-card:last-child{grid-column:auto}
+  .rc-chart-body-dona{flex-direction:column;align-items:center;height:auto}
+  .rc-dona-col{margin-bottom:8px}
+  .rc-rank-col{width:100%}
 }
 
 /* ===== VISTA POR SEDE ===== */
@@ -454,13 +479,14 @@ button:active{transform:scale(.98)}
   .rc-tbl-min{min-width:0!important}
   .rc-grid{grid-template-columns:1fr 1fr!important;gap:4px!important}
   .rc-card{page-break-inside:avoid;break-inside:avoid}
-  .rc-tile:hover,.rc-cell:hover{transform:none!important;box-shadow:none!important}
+  .rc-tile:hover{transform:none!important;box-shadow:none!important}
   .rc-container{padding:6px 8px!important;border-radius:8px!important;break-inside:avoid;box-shadow:none!important}
   .rc-kpi-v{font-size:16px!important}
   .rc-kpi-l{font-size:7px!important}
   .rc-tile-num{font-size:13px!important}
-  .rc-cell-num{font-size:12px!important}
   .rc-overlay{display:none!important}
+  .rc-charts{display:none!important}
+  .rc-chart-section-sub{display:none!important}
 
   /* ── INDICADORES ── */
   #indicadores-content div[style*="overflow-x"][style*="auto"]{overflow:visible!important;width:100%!important}

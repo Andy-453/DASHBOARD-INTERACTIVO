@@ -379,6 +379,7 @@ function renderIndicadores(){
   h+=`</div>`;
 
   wrap.innerHTML=h;
+  renderProfCharts();
 }
 
 /**
@@ -436,9 +437,68 @@ var _rcCompute = function(){
 };
 
 /**
+ * Tipos de línea de profundización (campo `t` en p.lineas[]).
+ * Se conservan las 4 categorías reales aunque Profundización 3 y "Sin línea"
+ * tengan pocos registros: son datos reales, no deben agruparse como "Otros".
+ */
+var _PROF_TYPES = ['Profundización 1','Profundización 2','Profundización 3','Sin línea de profundización'];
+// Colores claramente diferenciados para las 4 categorías (barras apiladas).
+var _PROF_TYPE_COLORS = ['#107a6a','#2e8b57','#C8A43A','#77837b'];
+
+/**
+ * Fuente de datos para las visualizaciones de LÍNEAS DE PROFUNDIZACIÓN.
+ * Analiza exclusivamente `p.lineas[]` y su campo `t`; NO usa enlaceObtencion,
+ * l.o, p.mae[] ni fac.doc. Dinámico desde window.DB en cada llamada.
+ * @returns {{
+ *   total:number,                        // total de líneas p.lineas[]
+ *   labels:Array<string>,                // nombres cortos de todas las facultades
+ *   facTotals:Array<number>,             // líneas totales por facultad (orden = labels)
+ *   facPct:Array<number>,                // % de participación (facTotals/total*100)
+ *   byTypeRows:Array<Array<number>>,     // [facultad][tipo] conteo (4 tipos)
+ *   typeSums:Array<number>,              // total por tipo (4)
+ *   rank:Array<{n:string,t:number,p:number}>  // ranking desc por total (todas las facultades)
+ * }}
+ */
+var _profSeries = function(){
+  var short = function(n){ return (n||'').replace('Facultad de ','').replace('Facultad ','').split(',')[0].trim(); };
+  var labels=[], facTotals=[], byTypeRows=[], typeSums=[0,0,0,0];
+  var total = 0;
+
+  AppData.getFacultades().forEach(function(fac){
+    var tStack = [0,0,0,0];
+    (fac.progs||[]).forEach(function(p){
+      (p.lineas||[]).forEach(function(l){
+        var tv = (l && l.t || '').toString().trim();
+        var idx = _PROF_TYPES.indexOf(tv);
+        if(idx < 0) idx = 2; // valor atípico -> lo tratamos como Profundización 3 (categoría residual real)
+        tStack[idx]++;
+      });
+    });
+    var fTotal = tStack[0]+tStack[1]+tStack[2]+tStack[3];
+    labels.push(short(fac.name));
+    facTotals.push(fTotal);
+    byTypeRows.push(tStack.slice());
+    for(var k=0;k<4;k++) typeSums[k]+=tStack[k];
+    total += fTotal;
+  });
+
+  var facPct = labels.map(function(_,i){ return total>0 ? (facTotals[i]/total*100) : 0; });
+  var rank = labels.map(function(n,i){ return { n:n, t:facTotals[i], p:facPct[i] }; })
+    .sort(function(a,b){ return b.t - a.t || (a.n).localeCompare(b.n); });
+
+  return {
+    total: total, labels: labels, facTotals: facTotals, facPct: facPct,
+    byTypeRows: byTypeRows, typeSums: typeSums, rank: rank
+  };
+};
+
+// Paleta por Facultad para la dona (G3) y su ranking lateral (colores consistentes).
+var _PROF_FAC_COLORS = ['#006633','#2e8b57','#3aaa72','#C8A43A','#378ADD','#D85A30','#993556','#534AB7'];
+
+/**
  * Genera el HTML completo de la sección "Registro Calificado por Facultad":
- * KPIs de resumen + tarjetas por facultad. Cada métrica con data-action para
- * abrir el detalle (rc-show-detail). Estilo coherente con el resto del panel.
+ * KPIs de resumen + tablas + tarjetas por facultad + visualizaciones de
+ * LÍNEAS DE PROFUNDIZACIÓN. Las gráficas se inicializan en renderProfCharts()
  * @returns {string}
  */
 var renderRCSeccion = function(){
@@ -447,77 +507,260 @@ var renderRCSeccion = function(){
 
   var h = '';
   h += '<div class="rc-container">';
-  h += '<div class="rc-title">Registro Calificado por Facultad</div>';
-  h += '<div class="rc-title-sub">Líneas con y sin registro calificado, por facultad y estado</div>';
+  h += '<div class="rc-title">Seguimiento a Especializaciones </div>';
+  h += '<div class="rc-title-sub">Registro Calificado y Proyectada, por facultad</div>';
 
-  // KPIs resumen (fondos pastel semánticos)
+  // KPIs resumen (3, fondos pastel semánticos)
   h += '<div class="rc-kpi-row">';
   var kpis = [
-    { v: rc.total,   l: 'Total líneas',       cls: 'rc-kpi-total'  },
-    { v: rc.conRC,   l: 'CON RC',             cls: 'rc-kpi-con'    },
-    { v: rc.sinRC,   l: 'SIN RC',             cls: 'rc-kpi-sin'    },
-    { v: rc.proySin, l: 'Proyectadas sin RC', cls: 'rc-kpi-proysin' }
+    { v: rc.total, l: 'Total líneas',       cls: 'rc-kpi-total' },
+    { v: rc.conRC, l: 'Registro Calificado', cls: 'rc-kpi-con'   },
+    { v: rc.sinRC, l: 'Proyectada',         cls: 'rc-kpi-proy'   }
   ];
   kpis.forEach(function(k){
     h += '<div class="rc-kpi '+k.cls+'"><div class="rc-kpi-v">'+k.v+'</div><div class="rc-kpi-l">'+k.l+'</div></div>';
   });
   h += '</div>';
 
-  // tabla resumen global (reutiliza .tbl-wrap + .tbl)
-  h += '<div class="tbl-wrap"><table class="tbl rc-tbl-min">';
+  // tabla resumen global (4 columnas)
+  h += '<div class="tbl-wrap"><table class="tbl rc-tbl-min rc-summary-tbl">';
   h += '<thead><tr>'
-    + '<th>Facultad</th>'
-    + '<th class="rc-th-c">Total</th>'
-    + '<th class="rc-th-c">CON RC</th>'
-    + '<th class="rc-th-c">SIN RC</th>'
-    + '<th class="rc-th-c">Vig. + RC</th>'
-    + '<th class="rc-th-c">Vig. sin RC</th>'
-    + '<th class="rc-th-c">Proy. + RC</th>'
-    + '<th class="rc-th-c">Proy. sin RC</th>'
+    + '<th>Estado Actual Posgrado</th>'
+    + '<th>Total</th>'
+    + '<th>Registro Calificado</th>'
+    + '<th>Proyectada</th>'
     + '</tr></thead><tbody>';
   rc.perFac.forEach(function(f){
     h += '<tr>'
       + '<td class="rc-txt-green">'+esc(short(f.fac.name))+'</td>'
-      + '<td class="rc-th-c rc-txt-dark">'+f.total+'</td>'
-      + '<td class="rc-th-c rc-txt-green">'+f.conRC+'</td>'
-      + '<td class="rc-th-c rc-txt-alert">'+f.sinRC+'</td>'
-      + '<td class="rc-th-c">'+f.vigCon+'</td>'
-      + '<td class="rc-th-c rc-txt-gold">'+f.vigSin+'</td>'
-      + '<td class="rc-th-c">'+f.proyCon+'</td>'
-      + '<td class="rc-th-c rc-txt-gold-bold">'+f.proySin+'</td>'
+      + '<td class="rc-txt-dark">'+f.total+'</td>'
+      + '<td class="rc-txt-green">'+f.conRC+'</td>'
+      + '<td class="rc-txt-gold">'+f.sinRC+'</td>'
       + '</tr>';
   });
   h += '<tr class="rc-row-total">'
     + '<td>TOTAL</td>'
-    + '<td class="rc-th-c">'+rc.total+'</td>'
-    + '<td class="rc-th-c">'+rc.conRC+'</td>'
-    + '<td class="rc-th-c">'+rc.sinRC+'</td>'
-    + '<td class="rc-th-c">'+rc.vigCon+'</td>'
-    + '<td class="rc-th-c">'+rc.vigSin+'</td>'
-    + '<td class="rc-th-c">'+rc.proyCon+'</td>'
-    + '<td class="rc-th-c">'+rc.proySin+'</td>'
+    + '<td>'+rc.total+'</td>'
+    + '<td>'+rc.conRC+'</td>'
+    + '<td>'+rc.sinRC+'</td>'
     + '</tr>';
   h += '</tbody></table></div>';
 
-  // tarjetas por facultad (chrome exterior limpio, pocos bordes internos)
+  // ===== Visualizaciones: LÍNEAS DE PROFUNDIZACIÓN por Facultad (p.lineas[] + campo t) =====
+  h += '<div class="rc-title-sub rc-chart-section-sub">Visualización — Líneas de profundización por Facultad</div>';
+  h += '<div class="rc-charts">';
+  h += '<div class="rc-chart-card">'
+    + '<div class="rc-chart-head">Líneas de profundización por Facultad</div>'
+    + '<div class="rc-chart-sub">Participación sobre el total de líneas</div>'
+    + '<div class="rc-chart-body rc-chart-body-tall"><canvas id="prof-chart-total" height="280"></canvas></div>'
+    + '</div>';
+  h += '<div class="rc-chart-card">'
+    + '<div class="rc-chart-head">Distribución por tipo de profundización</div>'
+    + '<div class="rc-chart-sub">Profundización 1 · 2 · 3 y Sin línea, por Facultad</div>'
+    + '<div class="rc-chart-body rc-chart-body-tall"><canvas id="prof-chart-type" height="280"></canvas></div>'
+    + '</div>';
+  // Ranking lateral de la dona (G3): todas las facultades por total desc.
+  var s3 = _profSeries();
+  var facFullMap = {};
+  AppData.getFacultades().forEach(function(f){ facFullMap[short(f.name)] = f.name; });
+  var rankHtml = s3.rank.map(function(f){
+    var dotCol = _PROF_FAC_COLORS[s3.labels.indexOf(f.n) % _PROF_FAC_COLORS.length];
+    var full = facFullMap[f.n] || f.n;
+    return '<div class="rc-rank-row" role="button" tabindex="0" data-action="prof-show-detail" data-filter="fac|'+esc(full)+'">'
+      + '<span class="rc-rank-dot" style="background:'+dotCol+'"></span>'
+      + '<span class="rc-rank-name">'+esc(f.n)+'</span>'
+      + '<span class="rc-rank-num">'+f.t+'</span>'
+      + '<span class="rc-rank-pct">'+f.p.toFixed(1)+'%</span>'
+      + '</div>';
+  }).join('');
+  h += '<div class="rc-chart-card rc-chart-card-dona">'
+    + '<div class="rc-chart-head">Distribución de líneas de profundización por Facultad</div>'
+    + '<div class="rc-chart-sub">Participación sobre el total de líneas</div>'
+    + '<div class="rc-chart-body rc-chart-body-dona">'
+    + '<div class="rc-dona-col">'
+    + '<div class="rc-doughnut-center"><div class="rc-doughnut-center-v" id="prof-dona-total"></div><div class="rc-doughnut-center-l" id="prof-dona-label">Líneas de profundización</div></div>'
+    + '<canvas id="prof-chart-dona" height="200"></canvas>'
+    + '</div>'
+    + '<div class="rc-rank-col">'
+    + '<div class="rc-rank-head"><span>Facultad</span><span>Cant.</span><span>Part.</span></div>'
+    + rankHtml
+    + '</div>'
+    + '</div>'
+    + '</div>';
+  h += '</div>';
+
+  // tarjetas por facultad (2 categorías clickeables)
   h += '<div class="rc-grid">';
   rc.perFac.forEach(function(f){
     h += '<div class="rc-card">'
       + '<div class="rc-card-head"><span class="rc-card-name">'+esc(short(f.fac.name))+'</span>'
       + '<span class="rc-card-total">Total <b>'+f.total+'</b></span></div>'
       + '<div class="rc-card-body">'
-      + '<div role="button" tabindex="0" data-action="rc-show-detail" data-filter="fac-con:'+esc(f.fac.name)+'" class="rc-tile rc-tile-con"><span class="rc-tile-label"><span class="rc-dot"></span>CON RC</span><span class="rc-tile-num">'+f.conRC+'</span></div>'
-      + '<div role="button" tabindex="0" data-action="rc-show-detail" data-filter="fac-sin:'+esc(f.fac.name)+'" class="rc-tile rc-tile-sin"><span class="rc-tile-label"><span class="rc-dot"></span>SIN RC</span><span class="rc-tile-num">'+f.sinRC+'</span></div>'
-      + '<div class="rc-sub">'
-      + '<div role="button" tabindex="0" data-action="rc-show-detail" data-filter="fac-vig-con:'+esc(f.fac.name)+'" class="rc-cell rc-cell-vigcon"><div class="rc-cell-label">Vigente + RC</div><div class="rc-cell-num">'+f.vigCon+'</div></div>'
-      + '<div role="button" tabindex="0" data-action="rc-show-detail" data-filter="fac-vig-sin:'+esc(f.fac.name)+'" class="rc-cell rc-cell-vigsin"><div class="rc-cell-label">Vigente sin RC</div><div class="rc-cell-num">'+f.vigSin+'</div></div>'
-      + '<div role="button" tabindex="0" data-action="rc-show-detail" data-filter="fac-proy-con:'+esc(f.fac.name)+'" class="rc-cell rc-cell-proycon"><div class="rc-cell-label">Proyectada + RC</div><div class="rc-cell-num">'+f.proyCon+'</div></div>'
-      + '<div role="button" tabindex="0" data-action="rc-show-detail" data-filter="fac-proy-sin:'+esc(f.fac.name)+'" class="rc-cell rc-cell-proysin"><div class="rc-cell-label">Proyectada sin RC</div><div class="rc-cell-num">'+f.proySin+'</div></div>'
-      + '</div></div></div>';
+      + '<div role="button" tabindex="0" data-action="rc-show-detail" data-filter="fac-con:'+esc(f.fac.name)+'" class="rc-tile rc-tile-con"><span class="rc-tile-label"><span class="rc-dot"></span>Registro Calificado</span><span class="rc-tile-num">'+f.conRC+'</span></div>'
+      + '<div role="button" tabindex="0" data-action="rc-show-detail" data-filter="fac-sin:'+esc(f.fac.name)+'" class="rc-tile rc-tile-sin"><span class="rc-tile-label"><span class="rc-dot"></span>Proyectada</span><span class="rc-tile-num">'+f.sinRC+'</span></div>'
+      + '</div></div>';
   });
   h += '</div>';
   h += '</div>';
   return h;
+};
+
+/**
+ * Inicializa las 3 visualizaciones Chart.js de LÍNEAS DE PROFUNDIZACIÓN.
+ * DEBE ejecutarse DESPUÉS de asignar wrap.innerHTML=h (patrón snies.js):
+ * las gráficas se crean con requestAnimationFrame, destruyendo primero toda
+ * instancia previa (Chart.getChart(id)?.destroy()).
+ * Usa _profSeries() → AppData.getFacultades() → window.DB en el momento (dinámico).
+ * Si Chart.js no está disponible, no hace nada (no rompe el indicador).
+ */
+var renderProfCharts = function(){
+  if(typeof Chart !== 'function' || typeof requestAnimationFrame !== 'function') return;
+  var canvasIds = ['prof-chart-total','prof-chart-type','prof-chart-dona'];
+  var missing = canvasIds.some(function(id){ return !document.getElementById(id); });
+  if(missing) return;
+
+  var s = _profSeries();
+  var short = function(n){ return (n||'').replace('Facultad de ','').replace('Facultad ','').split(',')[0].trim(); };
+
+  requestAnimationFrame(function(){
+    function destroy(id){
+      var ex = Chart.getChart ? Chart.getChart(id) : null;
+      if(ex) ex.destroy();
+    }
+
+    // Resuelve el nombre completo de facultad a partir del nombre corto y abre el modal.
+    function openFac(shortName, tipo){
+      if(!shortName) return;
+      var full = shortName;
+      AppData.getFacultades().forEach(function(f){
+        if(short(f.name) === shortName) full = f.name;
+      });
+      var filter = 'fac|' + full;
+      if(tipo) filter += '|tipo|' + tipo;
+      renderIndicadorProfDetalle(filter);
+    }
+
+    // ── G1: Líneas de profundización por Facultad (barras HORIZONTALES desc por total,
+    //        etiqueta = cantidad · % de participación sobre el total de líneas)
+    var rank = s.labels.map(function(n,i){ return { n:n, t:s.facTotals[i], p:s.facPct[i] }; })
+      .sort(function(a,b){ return b.t - a.t || (a.n).localeCompare(b.n); });
+    var g1Labels = rank.map(function(r){ return r.n; });
+    var g1Data = rank.map(function(r){ return r.t; });
+    var g1Pct = rank.map(function(r){ return r.p; });
+
+    destroy('prof-chart-total');
+    new Chart(document.getElementById('prof-chart-total'), {
+      type: 'bar',
+      data: { labels: g1Labels, datasets:[
+        { label:'Líneas', data:g1Data, backgroundColor:'#107a6a', borderRadius:6, maxBarThickness:22,
+          datalabels:{ color:'#0a2f1e', anchor:'end', align:'end', font:{ weight:'700', size:11 },
+            formatter:function(v, ctx){ var p=g1Pct[ctx.dataIndex]||0; return v>0 ? (v)+' · '+(p).toFixed(1)+'%' : ''; } } }
+      ]},
+      options: {
+        indexAxis:'y',
+        responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ right: 8 } },
+        onClick: function(evt, els){
+          if(!els || !els.length) return;
+          var lab = g1Labels[els[0].index];
+          openFac(lab);
+        },
+        plugins:{
+          legend:{ display:false },
+          tooltip:{ callbacks:{ label:function(ctx){
+            var p=g1Pct[ctx.dataIndex]||0;
+            return 'Líneas: '+ctx.parsed.x+' ('+ (p).toFixed(1) +'% del total)';
+          } } }
+        },
+        scales:{
+          x:{ beginAtZero:true, precision:0, title:{ display:false }, grid:{ display:false } },
+          y:{ grid:{ display:false }, ticks:{ font:{ size:10.5 }, autoSkip:false } }
+        }
+      }
+    });
+
+    // ── G2: Distribución por tipo y Facultad (barras HORIZONTALES APILADAS).
+    //        4 categorías (P1, P2, P3, Sin línea) con colores diferenciados; total al final.
+    var g2Labels = rank.map(function(r){ return r.n; });
+    var datasets = _PROF_TYPES.map(function(tn, k){
+      return {
+        label: tn,
+        data: g2Labels.map(function(nm){ var i = s.labels.indexOf(nm); return s.byTypeRows[i][k]; }),
+        backgroundColor: _PROF_TYPE_COLORS[k],
+        borderRadius: (k===0?6:0), maxBarThickness:22,
+        datalabels: (k===s.byTypeRows[0].length-1) ? {
+          color:'#0a2f1e', anchor:'end', align:'end', font:{ weight:'700', size:10.5 },
+          formatter:function(v, ctx){ var i = s.labels.indexOf(g2Labels[ctx.dataIndex]); return (s.facTotals[i] || 0); }
+        } : false
+      };
+    });
+
+    destroy('prof-chart-type');
+    new Chart(document.getElementById('prof-chart-type'), {
+      type: 'bar',
+      data: { labels: g2Labels, datasets: datasets },
+      options: {
+        indexAxis:'y',
+        responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ right: 10 } },
+        onClick: function(evt, els){
+          if(!els || !els.length) return;
+          var lab = g2Labels[els[0].index];
+          var tipo = _PROF_TYPES[els[0].datasetIndex];
+          openFac(lab, tipo);
+        },
+        plugins:{
+          legend:{ position:'bottom', labels:{ boxWidth:10, font:{ size:9.5 }, padding:8 } },
+          datalabels:{ display:false },
+          tooltip:{ callbacks:{ label:function(ctx){
+            var v = ctx.parsed.x || 0;
+            return ctx.dataset.label+': '+v+' línea(s)';
+          } } }
+        },
+        scales:{
+          x:{ stacked:true, beginAtZero:true, precision:0, title:{ display:false }, grid:{ display:false } },
+          y:{ stacked:true, grid:{ display:false }, ticks:{ font:{ size:10.5 }, autoSkip:false } }
+        }
+      }
+    });
+
+    // ── G3: Dona — participación de líneas por Facultad (7 facultades).
+    //        Total 52 + etiqueta en el centro; ranking lateral HTML con los mismos colores.
+    var donaTotalEl = document.getElementById('prof-dona-total');
+    if(donaTotalEl) donaTotalEl.textContent = String(s.total);
+
+    destroy('prof-chart-dona');
+    new Chart(document.getElementById('prof-chart-dona'), {
+      type: 'doughnut',
+      data: {
+        labels: s.labels,
+        datasets:[{ data:s.facTotals, backgroundColor: s.labels.map(function(nm, i){ return _PROF_FAC_COLORS[i % _PROF_FAC_COLORS.length]; }),
+          borderColor:'#fff', borderWidth:3, hoverOffset:6
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false, cutout:'72%',
+        layout:{ padding:{ top:6, bottom:6, left:4, right:4 } },
+        onClick: function(evt, els){
+          if(!els || !els.length) return;
+          var lab = s.labels[els[0].index];
+          openFac(lab);
+        },
+        plugins:{
+          legend:{ display:false },
+          tooltip:{ callbacks:{ label:function(ctx){
+            return ctx.label+': '+ctx.parsed+' línea(s) (' + (s.facPct[ctx.dataIndex]||0).toFixed(1) + '% del total)';
+          } } },
+          datalabels:{ color:'#fff', font:{ weight:'900', size:11.5 }, textAlign:'center',
+            formatter:function(v, ctx){
+              if(v <= 0) return '';
+              var p = s.facPct[ctx.dataIndex]||0;
+              return (p >= 6) ? (p).toFixed(0)+'%' : '';
+            } }
+        }
+      }
+    });
+  });
 };
 
 /**
@@ -543,11 +786,6 @@ var renderIndicadorRCDetalle = function(filter){
         if(facMatch && fac.name !== facMatch) return;
         if(kind === 'fac-con' && rc) ok = true;
         else if(kind === 'fac-sin' && !rc) ok = true;
-        else if(kind === 'fac-vig-con' && rc && v) ok = true;
-        else if(kind === 'fac-vig-sin' && !rc && v) ok = true;
-        else if(kind === 'fac-proy-con' && rc && proy) ok = true;
-        else if(kind === 'fac-proy-sin' && !rc && proy) ok = true;
-        else if(kind === 'proy-sin' && !rc && proy) ok = true;
         if(ok){
           list.push({
             fac: fac.name, prog: p.n, linea: l.l||'', esp: l.esp||'',
@@ -561,14 +799,12 @@ var renderIndicadorRCDetalle = function(filter){
 
   var title = 'Detalle de Registro Calificado';
   var kindLabel = {
-    'fac-con':'CON RC', 'fac-sin':'SIN RC', 'fac-vig-con':'Vigente + RC',
-    'fac-vig-sin':'Vigente sin RC', 'fac-proy-con':'Proyectada + RC',
-    'fac-proy-sin':'Proyectada sin RC', 'proy-sin':'Proyectadas sin RC'
+    'fac-con':'Registro Calificado', 'fac-sin':'Proyectada'
   }[filter && filter.split(':')[0]] || '';
   var sub = kindLabel ? (' — ' + kindLabel + (filter && filter.split(':')[1] ? ' — ' + filter.split(':')[1] : '')) : '';
 
   var rows = list.map(function(r, i){
-    var link = r.link ? '<a href="'+esc(r.link)+'" target="_blank" rel="noopener noreferrer" class="rc-link">Ver link</a>' : '<span class="rc-nolink">Sin RC</span>';
+    var link = r.link ? '<a href="'+esc(r.link)+'" target="_blank" rel="noopener noreferrer" class="rc-link">Ver link</a>' : '<span class="rc-nolink">Sin Registro Calificado</span>';
     return '<tr>'
       + '<td class="rc-txt-green">'+esc(r.fac)+'</td>'
       + '<td>'+esc(r.prog)+'</td>'
@@ -580,18 +816,21 @@ var renderIndicadorRCDetalle = function(filter){
       + '</tr>';
   }).join('');
 
+  var note = '<div class="rc-note">La categoría \'Proyectada\' corresponde a líneas sin Registro Calificado dentro de este indicador.</div>';
+
   var html = '<div id="rc-detail-overlay" class="rc-overlay">'
     + '<div class="modal rc-modal">'
     + '<div class="modal-title"><span>🔍</span><span>'+esc(title)+'<span class="rc-modal-sub">'+esc(sub)+'</span></span>'
     + '<button data-action="rc-close-detail" class="rc-close" title="Cerrar">×</button></div>'
     + '<div class="rc-modal-body">'
     + '<div class="rc-count"><b>'+list.length+'</b> línea(s)</div>'
+    + note
     + '<div class="tbl-wrap"><table class="tbl rc-detail-tbl">'
     + '<thead><tr>'
     + '<th>Facultad</th><th>Programa</th>'
     + '<th>Línea</th><th>Especialización</th>'
     + '<th>Oferta</th><th>Estado</th>'
-    + '<th>Link RC</th></tr></thead><tbody>'
+    + '<th>Link Registro Calificado</th></tr></thead><tbody>'
     + rows + '</tbody></table></div>'
     + '<div class="rc-modal-foot"><button data-action="rc-close-detail" class="rc-close-bottom">Cerrar</button></div>'
     + '</div></div></div>';
@@ -614,6 +853,155 @@ var renderIndicadorRCDetalle = function(filter){
   };
   if(document.addEventListener) document.addEventListener('keydown', onKey);
   if(node && node.addEventListener) node.addEventListener('click', onBackdrop);
+};
+
+/**
+ * Clasifica una línea de profundización a su tipo canónico (igual semántica que
+ * _profSeries: valores atípicos se mapean a Profundización 3).
+ * @param {Object} l - línea de p.lineas[]
+ * @returns {string} uno de _PROF_TYPES
+ */
+var _profTypeOf = function(l){
+  var v = (l && l.t || '').toString().trim();
+  var idx = _PROF_TYPES.indexOf(v);
+  return _PROF_TYPES[idx < 0 ? 2 : idx];
+};
+
+/**
+ * Helper de lectura de detalle del modal de LÍNEAS DE PROFUNDIZACIÓN.
+ * Recorre SOLO p.lineas[] (sin p.mae[] ni fac.doc). Lee window.DB en vivo.
+ * @param {string|null} facName - nombre completo de facultad (null/'' = todas)
+ * @param {string|null} tipo - 'Profundización 1|2|3' | 'Sin línea de profundización' (null/'Todas' = todas)
+ * @returns {{rows:Array, total:number}}
+ */
+var _profDetailRows = function(facName, tipo){
+  var rows = [], total = 0;
+  var wantFac = (facName !== null && typeof facName !== 'undefined') ? String(facName).trim() : '';
+  var wantTipo = (tipo === null || typeof tipo === 'undefined' || tipo === 'Todas') ? '' : String(tipo).trim();
+  AppData.getFacultades().forEach(function(fac){
+    if(wantFac !== '' && fac.name !== wantFac) return;
+    (fac.progs||[]).forEach(function(p){
+      (p.lineas||[]).forEach(function(l){
+        var t = _profTypeOf(l);
+        if(wantTipo !== '' && wantTipo !== t) return;
+        total++;
+        rows.push({ fac: fac.name, prog: p.n||'', esp: l.esp||'', linea: l.l||'', tipo: t });
+      });
+    });
+  });
+  return { rows: rows, total: total };
+};
+
+// Facultad activa del modal (para re-filtrar por tipo con profSetTipo).
+var _profModalFac = '';
+
+/**
+ * Construye y muestra el modal de detalle de LÍNEAS DE PROFUNDIZACIÓN.
+ * El filtro usa el formato "fac|<facultad>|tipo|<tipo>" (ambas opcionales),
+ * se lee window.DB en el momento (dinámico). Solo p.lineas[]; sin RC.
+ * @param {string} filter - clave de filtro, p.ej. "fac|Facultad de Ingeniería" o "fac|X|tipo|Profundización 1"
+ */
+var renderIndicadorProfDetalle = function(filter){
+  var overlay = document.getElementById('prof-detail-overlay');
+  if(overlay && overlay.parentNode) document.body.removeChild(overlay);
+
+  var opts = { fac:'', tipo:'' };
+  var parts = (filter||'').split('|');
+  for(var i=0;i+1<parts.length;i+=2){
+    var k = parts[i].trim(), v = parts[i+1].trim();
+    if(k === 'fac') opts.fac = v;
+    else if(k === 'tipo') opts.tipo = v;
+  }
+  _profModalFac = opts.fac;
+
+  var grandTotal = _profSeries().total;
+  var data = _profDetailRows(_profModalFac, opts.tipo);
+  var pct = grandTotal > 0 ? (data.total / grandTotal * 100) : 0;
+
+  var subTxt = _profModalFac ? _profModalFac : 'Todas las facultades';
+  if(opts.tipo && opts.tipo !== 'Todas') subTxt += ' · ' + opts.tipo;
+
+  function chipsHtml(active){
+    return ['Todas'].concat(_PROF_TYPES).map(function(t){
+      var act = (active || 'Todas') === t;
+      return '<button type="button" role="button" data-action="prof-filter-type" data-tipo="'+esc(t)+'" class="rc-filter-chip'+(act?' on':'')+'">'+esc(t)+'</button>';
+    }).join('');
+  }
+  function rowsHtml(list){
+    return list.map(function(r){
+      return '<tr>'
+        + '<td class="rc-txt-green">'+esc(r.fac)+'</td>'
+        + '<td>'+esc(r.prog)+'</td>'
+        + '<td>'+esc(r.esp)+'</td>'
+        + '<td>'+esc(r.linea)+'</td>'
+        + '<td class="rc-th-c">'+esc(r.tipo)+'</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  var html = '<div id="prof-detail-overlay" class="rc-overlay">'
+    + '<div class="modal rc-modal">'
+    + '<div class="modal-title"><span>🔍</span><span>Detalle de Líneas de Profundización<span class="rc-modal-sub">'+esc(subTxt)+'</span></span>'
+    + '<button data-action="prof-close-detail" class="rc-close" title="Cerrar">×</button></div>'
+    + '<div class="rc-modal-body">'
+    + '<div class="rc-count"><b>'+data.total+'</b> línea(s) · <b>'+pct.toFixed(1)+'%</b> sobre el total</div>'
+    + '<div class="rc-filter-row">'+chipsHtml(opts.tipo||'Todas')+'</div>'
+    + '<div class="tbl-wrap"><table class="tbl rc-detail-tbl">'
+    + '<thead><tr>'
+    + '<th>Facultad</th><th>Programa de pregrado</th>'
+    + '<th>Especialización</th><th>Línea de profundización</th>'
+    + '<th>Tipo de línea</th></tr></thead><tbody>'
+    + rowsHtml(data.rows) + '</tbody></table></div>'
+    + '<div class="rc-modal-foot"><button data-action="prof-close-detail" class="rc-close-bottom">Cerrar</button></div>'
+    + '</div></div></div>';
+
+  var holder = document.createElement('div');
+  holder.innerHTML = html;
+  var node = holder.firstChild;
+  document.body.appendChild(node);
+
+  var onKey = function(e){
+    if(!node || !node.parentNode){ document.removeEventListener('keydown', onKey); return; }
+    if(e.key === 'Escape' && node.parentNode) document.body.removeChild(node);
+    if(!node.parentNode) document.removeEventListener('keydown', onKey);
+  };
+  var onBackdrop = function(e){
+    if(e.target !== node) return;
+    if(node.parentNode) document.body.removeChild(node);
+  };
+  if(document.addEventListener) document.addEventListener('keydown', onKey);
+  if(node && node.addEventListener) node.addEventListener('click', onBackdrop);
+};
+
+/**
+ * Re-filtra el modal de LÍNEAS DE PROFUNDIZACIÓN ya abierto por tipo,
+ * consultando window.DB en el momento (dinámico). Actualiza el contador,
+ * la tabla y el estado activo de los chips.
+ * @param {string} tipo - 'Todas' | Profundización 1|2|3 | Sin línea de profundización
+ */
+var profSetTipo = function(tipo){
+  var overlay = document.getElementById('prof-detail-overlay');
+  if(!overlay) return;
+  var grandTotal = _profSeries().total;
+  var data = _profDetailRows(_profModalFac, tipo);
+  var pct = grandTotal > 0 ? (data.total / grandTotal * 100) : 0;
+  var count = overlay.querySelector('.rc-count');
+  if(count) count.innerHTML = '<b>'+data.total+'</b> línea(s) · <b>'+pct.toFixed(1)+'%</b> sobre el total';
+  var tbody = overlay.querySelector('.rc-detail-tbl tbody');
+  if(tbody){
+    tbody.innerHTML = data.rows.map(function(r){
+      return '<tr>'
+        + '<td class="rc-txt-green">'+esc(r.fac)+'</td>'
+        + '<td>'+esc(r.prog)+'</td>'
+        + '<td>'+esc(r.esp)+'</td>'
+        + '<td>'+esc(r.linea)+'</td>'
+        + '<td class="rc-th-c">'+esc(r.tipo)+'</td>'
+        + '</tr>';
+    }).join('');
+  }
+  var active = (tipo || 'Todas');
+  var chips = overlay.querySelectorAll('.rc-filter-chip');
+  if(chips && chips.forEach) chips.forEach(function(c){ c.classList.toggle('on', c.getAttribute('data-tipo') === active); });
 };
 
 // exportado via window.App (app.js)
