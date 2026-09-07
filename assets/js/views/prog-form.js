@@ -8,7 +8,7 @@ var TIPO_SIN_LINEA='Sin línea de profundización';
 
 function renderProgForm(){
   var f=AppData.getFacultad(AppState.navigation.curFac),isNew=editingProgId==='__new__';if(!f)return;
-  var p=isNew?{id:uid(),n:'',sedes:[],lineas:[{id:uid(),l:'',t:'Profundización 1',esp:'',e:'',o:'V',sedes:[],resp:'',mes:null,ano:null}],mae:[{id:uid(),n:'',e:'',o:'P',sedes:[],resp:'',mes:null,ano:null}]}:f.progs.find(function(x){return x.id===editingProgId;});
+  var p=isNew?{id:uid(),n:'',sedes:[],lineas:[{id:uid(),l:'',t:'Profundización 1',esp:'',e:'',o:'V',sedes:[],resp:'',mes:null,ano:null}],mae:[{id:uid(),n:'',e:'',o:'P',sedes:[],resp:'',mes:null,ano:null,tipo:''}]}:f.progs.find(function(x){return x.id===editingProgId;});
   if(!p) return;
   if(!tmpLineas._progId||tmpLineas._progId!==p.id){
     tmpLineas=JSON.parse(JSON.stringify(p.lineas||[]));tmpLineas._progId=p.id;
@@ -31,7 +31,7 @@ function renderProgForm(){
       +'<div class="grid2"><div class="field"><label>Oferta</label><select id="lo'+esc(l.id)+'"><option value="V"'+(l.o==='V'?' selected':'')+'>Vigente</option><option value="P"'+(l.o==='P'?' selected':'')+'>Proyectada</option></select></div>'
       +'<div class="field"><label>👤 Responsable</label><input id="lresp'+esc(l.id)+'" value="'+esc(l.resp||'')+'" placeholder="Docente o equipo"></div></div>'
       +'<div class="grid3"><div class="field"><label>📅 Mes</label><select id="lmes'+esc(l.id)+'">'+mo(l.mes)+'</select></div>'
-+'<div class="field"><label>📅 Año</label><select id="lano'+esc(l.id)+'">'+ao(l.ano)+'</select></div><div class="field"><label>🔗 Enlace</label><input type="url" id="lenlace'+esc(l.id)+'" value="'+esc(l.enlaceObtencion||'')+'" placeholder="URL programa"></div></div>'
++'<div class="field"><label>📅 Año</label><select id="lano'+esc(l.id)+'">'+ao(l.ano)+'</select></div><div class="field"><label>🔗 Link Registro Calificado</label><input type="url" id="lenlace'+esc(l.id)+'" value="'+esc(l.enlaceObtencion||'')+'" placeholder="URL Registro Calificado"></div></div>'
 +'<div style="margin-top:6px"><label style="font-size:10px;font-weight:700;color:#555;display:block;margin-bottom:3px">📍 Sedes</label><div style="display:flex;flex-wrap:wrap;gap:4px">'+ALL_SEDES.map(function(s){return '<label style="display:flex;align-items:center;gap:2px;font-size:9px;cursor:pointer;padding:2px 6px;border-radius:4px;background:'+((l.sedes||[]).indexOf(s)>-1?'#e6f2eb':'#f5f5f5')+'"><input type="checkbox" id="lse_'+esc(l.id)+'_'+esc(s)+'" '+((l.sedes||[]).indexOf(s)>-1?'checked':'')+' style="margin:0"> '+esc(s)+'</label>';}).join('')+'</div></div>'
 +'</div>';
   }).join('');
@@ -41,7 +41,8 @@ function renderProgForm(){
       +'<div class="grid2"><div class="field"><label>Maestría</label><input id="mn'+esc(m.id)+'" value="'+esc(m.n||'')+'" placeholder="Nombre"></div>'
       +'<div class="field"><label>Estado</label><select id="mes'+esc(m.id)+'">'+eo(m.e)+'</select></div></div>'
       +'<div class="grid2"><div class="field"><label>Oferta</label><select id="mo'+esc(m.id)+'"><option value="V"'+(m.o==='V'?' selected':'')+'>Vigente</option><option value="P"'+(m.o==='P'?' selected':'')+'>Proyectada</option></select></div>'
-      +'<div class="field"><label>👤 Responsable</label><input id="mresp'+esc(m.id)+'" value="'+esc(m.resp||'')+'" placeholder="Docente o equipo"></div></div>'
+      +'<div class="field"><label>Tipo de maestría</label><select id="mtipo'+esc(m.id)+'"><option value=""'+(m.tipo===''||!m.tipo?' selected':'')+'>Sin definir</option><option'+(m.tipo==='Profundización'?' selected':'')+'>Profundización</option><option'+(m.tipo==='Investigación'?' selected':'')+'>Investigación</option></select></div></div>'
+      +'<div class="grid2"><div class="field"><label>👤 Responsable</label><input id="mresp'+esc(m.id)+'" value="'+esc(m.resp||'')+'" placeholder="Docente o equipo"></div></div>'
       +'<div class="grid3"><div class="field"><label>📅 Mes</label><select id="mmes'+esc(m.id)+'">'+mo(m.mes)+'</select></div>'
 +'<div class="field"><label>📅 Año</label><select id="mano'+esc(m.id)+'">'+ao(m.ano)+'</select></div><div class="field"><label>🔗 Enlace</label><input type="url" id="menlace'+esc(m.id)+'" value="'+esc(m.enlaceObtencion||'')+'" placeholder="URL programa"></div></div>'
 +'<div style="margin-top:6px"><label style="font-size:10px;font-weight:700;color:#555;display:block;margin-bottom:3px">📍 Sedes</label><div style="display:flex;flex-wrap:wrap;gap:4px">'+ALL_SEDES.map(function(s){return '<label style="display:flex;align-items:center;gap:2px;font-size:9px;cursor:pointer;padding:2px 6px;border-radius:4px;background:'+((m.sedes||[]).indexOf(s)>-1?'#e6f2eb':'#f5f5f5')+'"><input type="checkbox" id="mse_'+esc(m.id)+'_'+esc(s)+'" '+((m.sedes||[]).indexOf(s)>-1?'checked':'')+' style="margin:0"> '+esc(s)+'</label>';}).join('')+'</div></div>'

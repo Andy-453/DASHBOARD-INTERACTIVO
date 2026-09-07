@@ -158,19 +158,19 @@ function getOrphanRoutes(){
   return orphans;
 }
 
-// ===== HOMOLOGACIÓN DESDE PREGRADO (por materia) =====
+// ===== HOMOLOGACIÓN DESDE PREGRADO (por CADI) =====
 /**
- * Devuelve el nombre de la materia de pregrado asociada a una materia,
+ * Devuelve el nombre del CADI de pregrado asociado a un CADI,
  * o null si no debe mostrarse la cápsula "🟣 Desde pregrado".
  *
  * Reglas:
- *   - homologa !== true            → null (la materia no es homologable)
- *   - sj.homo.materia vacío/ausente → null (no hay materia de pregrado asociada)
+ *   - homologa !== true            → null (el CADI no es homologable)
+ *   - sj.homo.materia vacío/ausente → null (no hay CADI de pregrado asociado)
  *   - en caso contrario            → el texto de sj.homo.materia
  *
  * @param {Object} subj  - subject {homologa, homo?}
  * @param {Object} route - ruta (sin uso en esta simplificación; se mantiene por firma)
- * @returns {string|null} nombre de la materia de pregrado o null
+ * @returns {string|null} nombre del CADI de pregrado o null
  */
 function _lrHomologacion(subj, route){
   if(!subj || subj.homologa !== true) return null;

@@ -17,6 +17,22 @@
  *   Estable. Integrado con storage.js → downloadHTML().
  */
 window.__EMBED = {
+  /**
+   * Normaliza el markup del nodo #toast en el HTML exportado para que SIEMPRE
+   * salga oculto y vacío, independientemente del estado transitorio del DOM vivo.
+   * El builder toma document.documentElement.outerHTML, que puede capturar el
+   * toast ya en "display:block" con el texto "⏳ Empaquetando…" fijado justo
+   * antes (storage.js). Sin esta normalización, un archivo exportado (sobre todo
+   * el ADMIN, que no lleva _adminHide) mostraría ese mensaje pegado de forma
+   * permanente al abrirse.
+   * @param {string} html
+   * @returns {string}
+   */
+  _resetToastMarkup: function(html) {
+    return html.replace(/<div id="toast"[^>]*>[\s\S]*?<\/div>/,
+      '<div id="toast" class="toast" style="display:none"></div>');
+  },
+
   collectCSS: function() {
     var parts = [];
     for (var i = 0; i < document.styleSheets.length; i++) {
@@ -109,7 +125,7 @@ window.__EMBED = {
         return '<script src="' + s + '"><\/script>';
       }).join('\n');
       html = html.replace('</body>', function() { return inlineScripts + '\n</body>'; });
-      return html;
+      return self._resetToastMarkup(html);
     });
   },
 
@@ -179,7 +195,7 @@ window.__EMBED = {
       }).join('\n');
 
       html = html.replace('</body>', function() { return inlineScripts + '\n</body>'; });
-      return html;
+      return self._resetToastMarkup(html);
     });
   }
 };

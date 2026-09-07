@@ -60,6 +60,16 @@ function renderTree(){
     return '<div class="badge" style="background:'+s.bg+';color:'+s.tx+'"><div class="bdot" style="background:'+s.dot+'"></div>'+_trEsc(e)+'</div>';
   }
 
+  function maeTipoPill(t){
+    const map={
+      'Profundización':{label:'Profundización',bg:'#e8f5ee',tx:'#1a6040',border:'#c3e0cf'},
+      'Investigación':{label:'Investigación',bg:'#e8f0fb',tx:'#1a5cb0',border:'#bcd0ef'}
+    };
+    const v=map[t];
+    if(!v) return '<div class="mae-tipo" style="background:#f0f0f0;color:#888;border-color:#d9d9d9">Sin definir</div>';
+    return '<div class="mae-tipo" style="background:'+v.bg+';color:'+v.tx+';border-color:'+v.border+'">'+v.label+'</div>';
+  }
+
   function routeLinkCls(id, sede){
     return _getLearningRoute(id, sede) ? ' route-link" data-action="show-learning-route" data-esp-id="'+_trEsc(id)+'" data-sede="'+_trEsc(sede) : '';
   }
@@ -224,7 +234,7 @@ function renderTree(){
                 <div class="node-stripe"></div>
                 <div class="node-body">
                   ${pll(m.o)}
-                  <div class="node-label">Maestría</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap"><div class="node-label" style="margin-bottom:0">Maestría</div>${maeTipoPill(m.tipo)}</div>
                   <div class="node-title${routeLinkCls(m.id, sEff)}">${_trEsc(m.n)}</div>
                   <div class="sede-chip">📍 ${(m.sedes||[]).map(_trEsc).join(' · ')}</div>
                   ${stBadge(m.e, m)}

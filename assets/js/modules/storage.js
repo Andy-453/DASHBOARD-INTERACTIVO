@@ -56,6 +56,58 @@ function loadDB(){
   if(window.__UDEC_ADMIN_EXPORT__ && window.__EMBEDDED_DB){window.DB=JSON.parse(JSON.stringify(window.__EMBEDDED_DB));return;}
   window.DB=JSON.parse(JSON.stringify(window.__DEFAULT_DATA));
 }
+function _hideToast(el){
+  if(!el) return;
+  if(el._hideT) clearTimeout(el._hideT);
+  el.textContent='';
+  el.style.display='none';
+}
+function _scheduleToastHide(el,ms){
+  if(!el) return;
+  if(el._hideT) clearTimeout(el._hideT);
+  el._hideT=setTimeout(function(){_hideToast(el);},ms);
+}
+/**
+ * Exporta HTML envolviendo la generación con gestión robusta del toast:
+ *  - muestra busyMsg mientras se empaqueta;
+ *  - si éxito: descarga + okMsg, luego oculta;
+ *  - si error/rechazo: intenta fallback clásico, muestra errMsg y SIEMPRE oculta;
+ *  - salvaguarda por timeout: si el embed nunca resuelve/rechaza (p. ej. un
+ *    fetch de CDN se cuelga), oculta el toast y muestra errMsg, evitando que
+ *    el mensaje de progreso quede pegado para siempre.
+ * @param {Function} buildFn - buildStandalone / buildStandaloneAdmin
+ * @param {Function} makeEmbed - _makeEmbedded / _makeAdminEmbedded
+ * @param {string} filename
+ * @param {string} busyMsg
+ * @param {string} okMsg
+ * @param {string} errMsg
+ */
+function _exportWithToast(buildFn,makeEmbed,filename,busyMsg,okMsg,errMsg){
+  var toastEl=document.getElementById('toast');
+  if(toastEl){toastEl.textContent=busyMsg;toastEl.style.display='block';if(toastEl._hideT)clearTimeout(toastEl._hideT);}
+  var settled=false;
+  var timeout=setTimeout(function(){
+    if(settled) return;
+    settled=true;
+    if(toastEl){toastEl.textContent=errMsg;_scheduleToastHide(toastEl,3500);}
+  },20000);
+  buildFn().then(function(html){
+    if(settled) return;
+    settled=true;clearTimeout(timeout);
+    _downloadBlob(html,filename);
+    if(toastEl){toastEl.textContent=okMsg;_scheduleToastHide(toastEl,2500);}
+  }).catch(function(err){
+    if(settled) return;
+    settled=true;clearTimeout(timeout);
+    console.error('embed error:',err);
+    try{
+      var html2=document.documentElement.outerHTML;
+      html2=html2.replace('</title>','</title>'+makeEmbed());
+      _downloadBlob(html2,filename);
+    }catch(e2){console.error('fallback export error:',e2);}
+    if(toastEl){toastEl.textContent=errMsg;_scheduleToastHide(toastEl,3500);}
+  });
+}
 /**
  * Descarga HTML standalone con CSS, JS e imágenes inline.
  * Usa __EMBED.buildStandalone() para embeber todos los recursos.
@@ -66,27 +118,20 @@ function downloadHTML(){
   var filename='Dashboard_UDEC_Posgrados_'+fecha+'.html';
 
   if(!window.__EMBED){
-    // Alternativa clásica si embed.js no cargó
     var html=document.documentElement.outerHTML;
     html=html.replace('</title>','</title>'+_makeEmbedded());
     _downloadBlob(html,filename);
     return;
   }
 
-  var toastEl=document.getElementById('toast');
-  if(toastEl){toastEl.textContent='⏳ Empaquetando dashboard...';toastEl.style.display='block';}
-
-  window.__EMBED.buildStandalone().then(function(html){
-    _downloadBlob(html,filename);
-    if(toastEl){toastEl.textContent='✅ Dashboard guardado con datos actualizados';setTimeout(function(){toastEl.style.display='none';},2500);}
-  }).catch(function(err){
-    console.error('embed error:',err);
-    // Alternativa: método clásico
-    var html=document.documentElement.outerHTML;
-    html=html.replace('</title>','</title>'+_makeEmbedded());
-    _downloadBlob(html,filename);
-    if(toastEl){toastEl.textContent='✅ Dashboard guardado (sin recursos embebidos)';setTimeout(function(){toastEl.style.display='none';},2500);}
-  });
+  _exportWithToast(
+    function(){return window.__EMBED.buildStandalone();},
+    _makeEmbedded,
+    filename,
+    '⏳ Empaquetando dashboard...',
+    '✅ Dashboard guardado con datos actualizados',
+    '❌ Error al empaquetar; se descargó la versión base'
+  );
 }
 
 function _downloadBlob(html,filename){
@@ -114,18 +159,14 @@ function downloadAdminHTML(){
     _downloadBlob(html,filename);
     return;
   }
-  var toastEl=document.getElementById('toast');
-  if(toastEl){toastEl.textContent='⏳ Empaquetando dashboard administrativo...';toastEl.style.display='block';}
-  window.__EMBED.buildStandaloneAdmin().then(function(html){
-    _downloadBlob(html,filename);
-    if(toastEl){toastEl.textContent='✅ Dashboard administrativo guardado';setTimeout(function(){toastEl.style.display='none';},2500);}
-  }).catch(function(err){
-    console.error('admin embed error:',err);
-    var html=document.documentElement.outerHTML;
-    html=html.replace('</title>','</title>'+_makeAdminEmbedded());
-    _downloadBlob(html,filename);
-    if(toastEl){toastEl.textContent='✅ Dashboard administrativo guardado (sin recursos embebidos)';setTimeout(function(){toastEl.style.display='none';},2500);}
-  });
+  _exportWithToast(
+    function(){return window.__EMBED.buildStandaloneAdmin();},
+    _makeAdminEmbedded,
+    filename,
+    '⏳ Empaquetando dashboard administrativo...',
+    '✅ Dashboard administrativo guardado',
+    '❌ Error al empaquetar; se descargó la versión base'
+  );
 }
 function _makeAdminEmbedded(){
   return '<script>' +

@@ -97,10 +97,10 @@ function openEditProg(pid){editingProgId=pid;if(!tmpLineas._progId||tmpLineas._p
 
 function addLinea(){collectLineas();collectMaes();var pid=tmpLineas._progId;tmpLineas.push({id:uid(),l:'',t:'Profundización 1',esp:'',e:'',o:'P',sedes:[],resp:'',mes:null,ano:null,enlaceObtencion:null});tmpLineas._progId=pid;renderProgForm();}
 function delLinea(lid){collectLineas();collectMaes();var pid=tmpLineas._progId;tmpLineas=tmpLineas.filter(function(l){return l.id!==lid;});tmpLineas._progId=pid;renderProgForm();}
-function addMae(){collectLineas();collectMaes();var pid=tmpMaes._progId;tmpMaes.push({id:uid(),n:'',e:'',o:'P',sedes:[],resp:'',mes:null,ano:null,enlaceObtencion:null});tmpMaes._progId=pid;renderProgForm();}
+function addMae(){collectLineas();collectMaes();var pid=tmpMaes._progId;tmpMaes.push({id:uid(),n:'',e:'',o:'P',sedes:[],resp:'',mes:null,ano:null,enlaceObtencion:null,tipo:''});tmpMaes._progId=pid;renderProgForm();}
 function delMae(mid){collectLineas();collectMaes();var pid=tmpMaes._progId;tmpMaes=tmpMaes.filter(function(m){return m.id!==mid;});tmpMaes._progId=pid;renderProgForm();}
 function collectLineas(){var pid=tmpLineas._progId;tmpLineas=tmpLineas.map(function(l){return{id:l.id,l:gv('ll'+l.id)||l.l,t:gv('lt'+l.id)||l.t,esp:gv('le'+l.id)||l.esp,e:gv('les'+l.id),o:gv('lo'+l.id)||l.o,motivo:gv('lm'+l.id)||l.motivo||'',sedes:ALL_SEDES.filter(function(s){var e=document.getElementById('lse_'+l.id+'_'+s);return e&&e.checked;}),resp:gv('lresp'+l.id),mes:gi('lmes'+l.id),ano:gi('lano'+l.id),enlaceObtencion:gv('lenlace'+l.id)||l.enlaceObtencion||null};});tmpLineas._progId=pid;}
-function collectMaes(){var pid=tmpMaes._progId;tmpMaes=tmpMaes.map(function(m){return{id:m.id,n:gv('mn'+m.id)||m.n,e:gv('mes'+m.id),o:gv('mo'+m.id)||m.o,sedes:ALL_SEDES.filter(function(s){var e=document.getElementById('mse_'+m.id+'_'+s);return e&&e.checked;}),resp:gv('mresp'+m.id),mes:gi('mmes'+m.id),ano:gi('mano'+m.id),enlaceObtencion:gv('menlace'+m.id)||m.enlaceObtencion||null};});tmpMaes._progId=pid;}
+function collectMaes(){var pid=tmpMaes._progId;tmpMaes=tmpMaes.map(function(m){return{id:m.id,n:gv('mn'+m.id)||m.n,e:gv('mes'+m.id),o:gv('mo'+m.id)||m.o,sedes:ALL_SEDES.filter(function(s){var e=document.getElementById('mse_'+m.id+'_'+s);return e&&e.checked;}),resp:gv('mresp'+m.id),mes:gi('mmes'+m.id),ano:gi('mano'+m.id),enlaceObtencion:gv('menlace'+m.id)||m.enlaceObtencion||null,tipo:gv('mtipo'+m.id)||m.tipo||''};});tmpMaes._progId=pid;}
 function saveProg(pid,isNew){
   collectLineas();collectMaes();
   var name=gv('pn').trim();
@@ -158,7 +158,7 @@ function _lrRenderList(){
         h+='<div style="background:#fafcfa;border:1px solid #e8f0ec;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">'
           +'<div style="flex:1;min-width:0">'
             +'<div style="font-size:11px;font-weight:700;color:#333">'+(k==='ALL'?'\ud83c\udf10 Todas las sedes':'🏫 '+_lrEsc(k))+(k==='ALL'?' <span style="font-size:9px;color:#999;font-weight:400">(ruta global)</span>':' <span style="font-size:9px;color:#999;font-weight:400">(sede espec\u00edfica)</span>')+'</div>'
-            +'<div style="font-size:9px;color:#999;margin-top:2px">'+e.semesters.length+' semestre(s) \u00b7 '+esc(lrCred)+' cr\u00e9ditos \u00b7 '+ts+' materia(s)'+(e.version?' \u00b7 v'+_lrEsc(e.version):'')+'</div>'
+            +'<div style="font-size:9px;color:#999;margin-top:2px">'+e.semesters.length+' semestre(s) \u00b7 '+esc(lrCred)+' cr\u00e9ditos \u00b7 '+ts+' CADI(s)'+(e.version?' \u00b7 v'+_lrEsc(e.version):'')+'</div>'
           +'</div>'
           +'<div style="display:flex;gap:5px;flex-shrink:0">'
           +'<button data-action="lr-edit-route" data-esp-id="'+_lrEsc(p.id)+'" data-sede="'+_lrEsc(k)+'" style="background:#006633;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:9px;font-weight:700;cursor:pointer">\u270e Editar</button>'
@@ -241,7 +241,7 @@ function _lrCollectSourceIds(route){
 
 // === R3 (E16): fusión conservadora. Parte de una copia profunda de la fuente y
 // solo modifica los campos representados por el formulario. Preserva campos no
-// representados, version/resourceUrl/homo.materia, materias existentes con título
+// representados, version/resourceUrl/homo.materia, CADIs existentes con título
 // vacío y los IDs. Descarta únicamente filas NUEVAS completamente vacías. ===
 function _lrMergeFormIntoRoute(src, form){
   var out=_lrDraftCopy(src);
@@ -359,17 +359,17 @@ function _lrRenderRouteForm(route, meta){
     sem.subjects.forEach(function(subj,ji){
       var shomoMateria = (subj.homo && subj.homo.materia) || '';
       h+='<div class="lr-subject" data-si="'+si+'" data-ji="'+ji+'" data-subj-id="'+_lrEsc(subj.id||'')+'" style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f9fbfa;border:1px solid #e8f0ec;border-radius:6px;margin-bottom:4px;flex-wrap:wrap">'
-        +'<input class="lr-subj-name" value="'+_lrEsc(subj.title||'')+'" placeholder="Nombre de la materia" style="flex:1;min-width:0;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px">'
+        +'<input class="lr-subj-name" value="'+_lrEsc(subj.title||'')+'" placeholder="Nombre del CADI" style="flex:1;min-width:0;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px">'
         +'<input class="lr-subj-credits" data-action="lr-update-sem-credits" type="number" min="0" max="10" value="'+esc(subj.credits)+'" style="width:45px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px;text-align:center" placeholder="Cr">'
         +'<input class="lr-subj-version" value="'+_lrEsc(subj.version||'')+'" placeholder="Versi\u00f3n" title="Versi\u00f3n (opcional)" style="width:70px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px">'
         +'<label style="display:flex;align-items:center;gap:3px;font-size:9px;color:#666;white-space:nowrap;cursor:pointer"><input class="lr-subj-homologa" data-action="lr-touch-homologa" type="checkbox" '+(subj.homologa?'checked':'')+'> Homologa</label>'
-        +'<input class="lr-subj-homo" type="text" value="'+_lrEsc(shomoMateria)+'" placeholder="Materia homologada desde pregrado" title="Materia homologada desde pregrado" '+(subj.homologa?'':'disabled')+' style="max-width:190px;min-width:120px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px">'
-        +'<input class="lr-subj-url" type="url" value="'+_lrEsc(subj.resourceUrl||'')+'" placeholder="URL materia (opcional)" style="width:140px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px">'
-        +'<button data-action="lr-delete-subject" data-si="'+si+'" data-ji="'+ji+'" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:14px;padding:2px" title="Eliminar materia">\u00d7</button>'
++'<input class="lr-subj-homo" type="text" value="'+_lrEsc(shomoMateria)+'" placeholder="CADI homologado desde pregrado" title="CADI homologado desde pregrado" '+(subj.homologa?'':'disabled')+' style="max-width:190px;min-width:120px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px">'
++'<input class="lr-subj-url" type="url" value="'+_lrEsc(subj.resourceUrl||'')+'" placeholder="URL CADI (opcional)" style="width:140px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px">'
++'<button data-action="lr-delete-subject" data-si="'+si+'" data-ji="'+ji+'" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:14px;padding:2px" title="Eliminar CADI">\u00d7</button>'
         +'</div>';
     });
     h+='</div>';
-    h+='<button data-action="lr-add-subject" data-si="'+si+'" style="padding:4px 10px;background:none;border:1px dashed #ccc;border-radius:4px;cursor:pointer;font-size:9px;color:#999;width:100%">+ Agregar materia</button>';
+    h+='<button data-action="lr-add-subject" data-si="'+si+'" style="padding:4px 10px;background:none;border:1px dashed #ccc;border-radius:4px;cursor:pointer;font-size:9px;color:#999;width:100%">+ Agregar CADI</button>';
     h+='</div>';
   });
   h+='</div>';
@@ -480,7 +480,7 @@ function _lrAddSubject(si){
 function _lrDeleteSubject(si,ji){
   var data=_lrCollectFormData(); if(!data) return;
   if(!data.semesters[si]){ toast('Semestre no encontrado'); return; }
-  if(data.semesters[si].subjects.length<=1){ toast('Debe haber al menos una materia'); return; }
+  if(data.semesters[si].subjects.length<=1){ toast('Debe haber al menos una CADI'); return; }
   data.semesters[si].subjects.splice(ji,1);
   _rerenderForm(data,data.espId,data.sede);
 }

@@ -1586,7 +1586,7 @@ Donde cada `ruta` tiene la forma:
   espName: 'Esp. en ...',         // nombre del programa
   version: 'V2.1',                // opcional
   type:    'especializacion' | 'maestria' | 'doctorado',
-  credits: 20,                    // suma de créditos de materias
+  credits: 20,                    // suma de créditos de CADIs
   semesters: [
     {
       id:    'sem1',
@@ -1619,7 +1619,7 @@ Donde cada `ruta` tiene la forma:
 `ALL` es la ruta por defecto de un programa. Reglas:
 
 1. Una ruta `ALL` **es la base de referencia**: el editor permite crear una ruta de sede
-   **copiando la ruta ALL** (`copyFrom:'ALL'`), conservando semestres, materias e ids.
+   **copiando la ruta ALL** (`copyFrom:'ALL'`), conservando semestres, CADIs e ids.
 2. `ALL` actúa como **fallback** de resolución: si se solicita la ruta de una sede sin
    ruta específica, se abre la ruta `ALL`.
 3. Al eliminar una ruta de sede específica, `ALL` **permanece intacta**.
@@ -1648,7 +1648,7 @@ sede específica (m[sede])  →  ALL (m.ALL)  →  null
 | `_hasFlatRoute` | `(obj)` → boolean | Detecta estructura legacy plana (utils.js:71) |
 | `_normalizeRoutes` | `(obj)` → mapa anidado | Normaliza legacy a `[espId][sede]` (utils.js:78) |
 | `_lrMakeId` | `(espId, sede)` → string | Genera el id canónico de la ruta (utils.js:92) |
-| `_lrHomologacion` | `(subj, route)` → string\|null | Nombre de materia de pregrado si `homologa===true` y `homo.materia` no vacío (utils.js:143) |
+| `_lrHomologacion` | `(subj, route)` → string\|null | Nombre del CADI de pregrado si `homologa===true` y `homo.materia` no vacío (utils.js:143) |
 
 ### 20.5. Normalización de rutas legacy planas
 
@@ -1707,9 +1707,9 @@ borra la key, restaura los defaults normalizados y re-renderiza.
 - Tras restaurar: `saveDB()`, `saveLearningRoutes()`, sincroniza SNIES, catálogo de
   sedes, etiquetas de programas por defecto, y refresca todas las vistas.
 
-### 20.8. Persistencia de IDs de semestres y materias
+### 20.8. Persistencia de IDs de semestres y CADIs
 
-El editor conserva los `id` de semestres y materias al guardar:
+El editor conserva los `id` de semestres y CADIs al guardar:
 
 - `_lrCollectFormData` (editor.js:276) lee `dataset.semId` / `dataset.subjId` y los
   reutiliza; solo genera `uid()` para elementos nuevos (`_lrAddSemester`,
@@ -1774,15 +1774,15 @@ El editor tiene dos pestañas (`_lrEditorTab`, editor.js:5): **Programas** y
 - `_lrEditRoute(progId, sede, prefill)` (editor.js:194): abre el formulario en
   `#editor-content` con `#lr-form-container` (`data-esp-id`, `data-prog-type`,
   `data-sede`), `#lr-sede` (select), nombre/versión, total de créditos, semestres y
-  materias. Recupera la ruta existente o la crea (copia de ALL / plantilla nueva).
+  CADIs. Recupera la ruta existente o la crea (copia de ALL / plantilla nueva).
 - `_lrCollectFormData` (editor.js:276): recolecta el formulario; nombre obligatorio
-  (toast si vacío); materias sin título se omiten; créditos recalculados.
+  (toast si vacío); CADIs sin título se omiten; créditos recalculados.
 - `_lrSaveRoute` (editor.js:318): construye y persiste
   `__LEARNING_ROUTES[espId][sede]` (id canónico, `saveLearningRoutes()`), toast
   "Ruta guardada", re-renderiza.
 - `_rerenderForm` (editor.js:372): guarda un **borrador en memoria**
   (`__LEARNING_ROUTES`) **sin persistir** (phantom) para operaciones de agregar /
-  eliminar semestre o materia; solo el guardado explícito persiste.
+  eliminar semestre o CADI; solo el guardado explícito persiste.
 - `_lrPreviewRoute` (editor.js:382): abre modal con la ruta guardada, o con el
   borrador del formulario si aún no se guardó.
 - Acción `edit-lr-from-modal` (actions.js:57): desde el modal, valida
@@ -1883,7 +1883,7 @@ las rutas en un HTML administrativo nuevo:
   profunda** (o plantilla), **nunca escribe en el mapa vivo**.
 - `_lrMergeFormIntoRoute` (editor.js:244) es una **fusión conservadora**: parte de la
   copia profunda y solo toca campos representados por el formulario. Preserva campos
-  no representados, `version`, `resourceUrl`, `homo.materia`, materias existentes con
+  no representados, `version`, `resourceUrl`, `homo.materia`, CADIs existentes con
   título vacío e IDs; **descarta únicamente filas nuevas totalmente vacías**.
 - `_lrSaveRoute` (editor.js:426) fusiona sobre el borrador/`_lrDraftSrc`, persiste con
   `saveLearningRoutes()` y llama a `_lrCancelDraft()`.
@@ -1988,3 +1988,107 @@ intacta; `_getLearningRoute` (utils.js:64) y `_hasLR` (utils.js:60) se usan tal 
 Suites de validación: `smoke-lr-resilience.js` (R1), `smoke-lr-r2.js` (R2),
 `smoke-lr-draft.js` (R3), `smoke-lr-restore-safe.js` (R4),
 `smoke-lr-orphans.js` (R5).
+
+---
+
+## 22. Datos base versionados + localStorage como capa de trabajo
+
+> **Hito**: 2026-08-28 — Se formaliza el modelo de datos de dos capas: la **base
+> oficial versionada** (en el repositorio/GitHub) y la **copia de trabajo por
+> navegador** en localStorage.
+
+### 22.1. Concepto general
+
+El Dashboard opera sobre datos en dos planos distintos con responsabilidades
+separadas:
+
+| Plano | Dónde vive | Carácter | Ejemplos |
+|---|---|---|---|
+| **Base oficial (versionada)** | Repositorio (`assets/js/data/*.js`) | **Solo lectura en runtime**; es la fuente de verdad de instalaciones limpias y de recuperación | `default-data.js`, `learning-routes.js`, `rc-data.js`, SNIES y sedes en `app-state.js`, manifiesto `data-version.js` |
+| **Capa de trabajo** | `localStorage` del navegador | **Mutable**; el usuario edita aquí | `udec_rutas_db`, `udec_learning_routes` (+ `_meta`), `udec_snies_data`, `udec_sedes_catalog` |
+
+**GitHub contiene la base oficial. Cada navegador mantiene su propia copia de
+trabajo en localStorage.** Un navegador nunca escribe de vuelta a GitHub: la única
+forma de cambiar la base es publicar un nuevo snapshot (sección 22.4).
+
+### 22.2. Base oficial — datasets versionados
+
+Cada dataset de la base tiene una versión propia, registrada en
+`assets/js/data/data-version.js` (expone `window.__DATA_VERSION`):
+
+| Dataset | Datos | Versión | Conteos (base actual) |
+|---|---|---|---|
+| `db` | `window.__DEFAULT_DATA` (`default-data.js`) | `1.0.0` | 7 facultades · 18 programas · 52 especializaciones · 20 maestrías · 6 doctorados · 96 IDs únicos |
+| `learningRoutes` | `window.__LEARNING_ROUTES` (`learning-routes.js`) | `1.0.0` | 25 rutas globales · 0 huérfanas |
+| `snies` | SNIES en `AppState.snies.SD` (`app-state.js`) | `1.0.0` | 12 programas · 5 años de resumen · `_source: default` |
+| `rc` | `data/rc-data.js` (`BASE`/`RC_DEFAULT`) | `1.0.0` | 19 registros · el snapshot trae `rcRaw: null` (no se reemplaza) |
+| `sedes` | `ALL_SEDES`/`DEFAULT_SEDES` (`app-state.js`) | `1.0.0` | 7 sedes |
+
+El manifiesto también registra `published` (fecha del snapshot) y `snapshot`
+(origen: nombre de archivo, fecha y `version:2` del backup).
+
+- `data-version.js` es **solo lectura**: no escribe en localStorage ni altera
+  lógica de la aplicación. Se carga después de los módulos de datos que describe
+  (orden estricto, sin reordenar scripts existentes).
+- Los datasets `snies`, `rc` y `sedes` conservan sus versiones/valores actuales:
+  el snapshot confirmó que no cambian, por lo que no se regeneraron.
+
+### 22.3. Papel de localStorage (capa de trabajo)
+
+- A la primera carga sin datos, la app **siembra** la base en localStorage
+  (`loadDB`, `loadLearningRoutes` con su meta `schemaVersion:2`, SNIES, sedes).
+- A partir de ahí, el usuario edita **su** copia local; `saveDB`/`saveLearningRoutes`
+  persisten solo en `localStorage`.
+- Los mecanismos de resiliencia de rutas (`__LEARNING_ROUTES_BASE_V2`,
+  `_recoverFromBase`, re-seed) usan la **base** únicamente ante ausencia, vacío o
+  corrupción del dato local. Ver secciones §20 y §21.
+- El **backup JSON** (`backupDB`) captura la capa de trabajo actual; es la materia
+  prima para publicar una nueva base, pero **no se versiona en el repositorio**.
+
+### 22.4. Runbook — publicar una nueva versión de datos base
+
+Procedimiento reproducible para elevar un snapshot a **base oficial**:
+
+1. **Obtener el snapshot**: en el Dashboard → Herramientas → *Respaldo (JSON)*.
+   Guardar el archivo fuera del repo (p. ej. `~/Downloads`). **No** añadir el JSON
+   al repositorio (es dato de trabajo personal).
+2. **Validar y publicar**:
+   ```
+   node tools/publish-data.js "ruta/al/backup.json"
+   ```
+   El script:
+   - Valida el snapshot **antes de escribir**: `version === 2`, estructura de
+     facultades/programas/doctorados, **IDs únicos**, presencia de DB/LR/SNIES/sedes/RC.
+   - Detecta **rutas huérfanas** (claves de `learningRoutes` sin programa en el DB,
+     misma convención de IDs que `utils.js:_getAllAcademicPrograms`, p. ej.
+     `doc-<facId>` para doctorados). Si hay alguna, **aborta sin escribir**.
+   - Convierte `backup.db` → `window.__DEFAULT_DATA` y
+     `backup.learningRoutes` → `window.__LEARNING_ROUTES` (suelta la envoltura
+     `ALL` para que `learning-routes.js` derive `__LEARNING_ROUTES_BASE_V2`
+     exactamente). **Preserva IDs, relaciones, nombres, campos y valores**; no
+     renombra ni normaliza.
+   - Solo toca `default-data.js` y `learning-routes.js`; **no modifica** `storage.js`,
+     CRUD, vistas, controladores, SNIES/sedes/RC ni la estructura de datos.
+   - Escribe en pretty-print con saltos **CRLF** (convención del repo).
+3. **Actualizar el manifiesto** `data-version.js`: subir la versión para
+   `db` y `learningRoutes`, y actualizar `published`/`snapshot` con la fecha y
+   origen del nuevo snapshot. Dejar `snies`/`rc`/`sedes` con sus versiones si no
+   cambiaron.
+4. **Validar en clon limpio**: abrir el Dashboard con un perfil de navegador nuevo
+   (`--user-data-dir` único) y comprobar que siembra exactamente la nueva base y
+   que la edición persiste en localStorage (sin ser pisada por la base).
+5. **Verificar integridad**: `git diff --check` sin alertas, revisar `git status`,
+   ejecutar regresiones (renders, filtros, SNIES, rutas) y confirmar `git diff`
+   solo en los archivos de datos.
+6. **Commit** de `default-data.js`, `learning-routes.js`, `data-version.js`,
+   `publish-data.js` y este documento. **Nunca** el JSON del snapshot.
+
+### 22.5. Reglas invariantes
+
+- **GitHub = base oficial**; los archivos `data/*.js` se versionan en el repo.
+- **localStorage = capa de trabajo** por navegador; no se sincroniza a GitHub.
+- No se sube el backup JSON personal al repositorio.
+- No se modifica la lógica de persistencia (storage.js, models/learning-routes.js,
+  snies-loader.js) ni el CRUD en este flujo.
+- `data-version.js` es un manifiesto informativo; no debe acoplarse lógica de
+  la aplicación a él en esta fase.

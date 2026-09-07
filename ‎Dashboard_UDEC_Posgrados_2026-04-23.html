@@ -16,7 +16,7 @@
 <header class="header">
   <!-- LOGO IZQUIERDO: Universidad de Cundinamarca -->
   <div class="logo-left">
-    <div style="background:#fff;border-radius:8px;padding:6px 2px;display:flex;align-items:center;height:80px;box-shadow:0 1px 4px rgba(0,0,0,0.15)">
+    <div style="padding:6px 2px;display:flex;align-items:center;height:80px">
       <img src="assets/img/udec-logo.png" alt="Universidad de Cundinamarca" style="height:80px;object-fit:contain;display:block">
     </div>
   </div>
@@ -35,6 +35,7 @@
           <button class="btn-white" onclick="downloadDB()" title="Descarga la base de datos en CSV">⬇ Descargar CSV</button>
           <button class="btn-white" data-action="download-admin-html" title="Descarga versión editable con herramientas administrativas">🛠 Exportar Administrador</button>
           <button class="btn-white" data-action="backup-db" title="Descarga respaldo completo en JSON">⬇ Respaldo JSON</button>
+          <button class="btn-white" data-action="download-lr-excel" title="Descarga todas las rutas de aprendizaje en formato Excel">📊 Descargar rutas de aprendizaje</button>
           <button class="btn-white" data-action="restore-db" title="Restaurar datos desde un archivo de respaldo">⬆ Restaurar</button>
           <button class="btn-white" data-action="manage-sedes" title="Administrar catálogo de sedes">⚙️ Gestionar Sedes</button>
           <button class="btn-white" data-action="reset-db" title="Borra los datos guardados y recarga los datos originales" style="font-size:10px;opacity:.8">↺ Restablecer datos</button>
@@ -46,7 +47,7 @@
 
   <!-- LOGO DERECHO: Instituto de Posgrados -->
   <div class="logo-right">
-    <div style="background:#fff;border-radius:8px;padding:6px 12px;display:flex;align-items:center;height:60px;box-shadow:0 1px 4px rgba(0,0,0,0.15)">
+    <div style="padding:6px 12px;display:flex;align-items:center;height:60px">
       <img src="assets/img/instituto-posgrados-logo.png" alt="Instituto de Posgrados" style="height:46px;object-fit:contain;display:block">
     </div>
   </div>
@@ -1199,6 +1200,7 @@
 <script src="assets/js/modules/indicators.js"></script>
 <script src="assets/js/modules/export.js"></script>
 <script src="assets/js/data/learning-routes.js"></script>
+<script src="assets/js/data/data-version.js"></script>
 <script src="assets/js/views/pipeline.js"></script>
 <script src="assets/js/views/sede-view.js"></script>
 <script src="assets/js/views/learning-route.js"></script>

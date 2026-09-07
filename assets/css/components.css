@@ -4,7 +4,7 @@
 .route-link{cursor:pointer}
 .route-link:hover{color:var(--udec-green);text-decoration:underline}
 
-/* Card de materia — minitarjeta por materia dentro del semestre */
+/* Card de CADI — minitarjeta por CADI dentro del semestre */
 .subj-card{background:#fff;border:1px solid var(--udec-border);border-radius:5px;display:flex;align-items:stretch;width:100%;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .12s}
 .subj-card:hover{box-shadow:0 2px 6px rgba(0,0,0,.08)}
 .subj-stripe{width:3px;flex-shrink:0;background:var(--udec-green);border-radius:5px 0 0 5px}
@@ -16,12 +16,12 @@
 .lr-homo-pill{background:#F0EAFB;color:#6C3FB0;border:1px solid #C9B8E8;margin-bottom:0;font-size:7px;padding:1px 5px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
 .lr-homo-dot{width:8px;height:8px;border-radius:50%;background:#6C3FB0;display:inline-block;flex-shrink:0}
 
-/* Leyenda inferior del modal de ruta — explica los indicadores de cada materia */
+/* Leyenda inferior del modal de ruta — explica los indicadores de cada CADI */
 .lr-legend{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding:6px 12px;background:#f7f5fb;border:1px solid #e4dcf2;border-radius:8px;font-size:9px;color:#666}
 .lr-legend .lr-legend-item{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .lr-legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
 
-/* Input "Materia homologada desde pregrado" del editor (fila de materia) */
+/* Input "CADI homologado desde pregrado" del editor (fila de CADI) */
 .lr-subject .lr-subj-homo{max-width:190px;min-width:120px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:10px;color:#333;background:#fff}
 .lr-subject .lr-subj-homo:disabled{color:#aaa;background:#f5f5f5;border-color:#e0e0e0;opacity:.6}
 

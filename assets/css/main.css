@@ -8,6 +8,16 @@
   --udec-dark:#1a2e1a;
   --udec-gray:#f4f6f4;
   --udec-border:#c8ddd0;
+  --udec-alert:#a35c44;
+  --udec-alert-strong:#b04a4a;
+
+  /* Paleta semántica soft (RC) */
+  --rc-verde-bg:#eaf6ef;   --rc-verde-tx:#0f6b44;   /* vigente + RC  */
+  --rc-turq-bg:#e6f4f2;    --rc-turq-tx:#107a6a;    /* CON RC        */
+  --rc-rojo-bg:#fbeeee;    --rc-rojo-tx:#a3443f;    /* SIN RC        */
+  --rc-ambar-bg:#fdf1dc;   --rc-ambar-tx:#9a6b12;   /* proy. sin RC  */
+  --rc-azul-bg:#e8f0fb;    --rc-azul-tx:#2b6cb0;    /* proy. + RC    */
+  --rc-total-bg:#eef4ef;   --rc-total-tx:#0f6b44;   /* total         */
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#1a1a1a;background:var(--udec-gray)}
@@ -18,13 +28,14 @@ button:hover{background:var(--udec-green-light)}
 button:active{transform:scale(.98)}
 
 /* ===== HEADER ===== */
-.header{background:var(--udec-green);color:#fff;padding:.75rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:4px solid var(--udec-gold);flex-wrap:wrap}
-.logo-left{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.logo-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.header{background:var(--udec-green);color:#fff;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:4px solid var(--udec-gold);flex-wrap:wrap;min-height:160px}
+.logo-left{display:flex;align-items:center;gap:10px;flex-shrink:0;flex:0 0 309px}
+.logo-right{display:flex;align-items:center;gap:10px;flex-shrink:0;flex:0 0 309px;justify-content:flex-end}
 .header-center{flex:1;text-align:center;min-width:200px}
-.header h1{font-size:15px;font-weight:800;letter-spacing:.02em;text-align:center}
-.header p{font-size:10px;opacity:.85;margin-top:3px;text-align:center}
+.header h1{font-size:22px;font-weight:800;letter-spacing:.02em;text-align:center}
+.header p{font-size:12px;opacity:.85;margin-top:3px;text-align:center}
 .header-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.header-btns button{font-size:12px}
 .btn-gold{background:var(--udec-gold);color:#fff;border-color:var(--udec-gold);font-weight:600}
 .btn-gold:hover{background:#a88530}
 .btn-white{background:#fff;color:var(--udec-green);border-color:#fff;font-weight:600}
@@ -192,6 +203,7 @@ button:active{transform:scale(.98)}
 .pv{background:#e6f2eb;color:#006633;border:1px solid #b0d4be}
 .pp{background:#e8f0fb;color:#1a5cb0;border:1px solid #b0c8e8}
 .tipo-tag{display:inline-block;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#e8f5ee;color:#1a6040;border:1px solid #c3e0cf;padding:2px 8px;border-radius:10px;margin-bottom:4px}
+.mae-tipo{display:inline-flex;align-items:center;font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:8px;border:1px solid transparent;line-height:1.4}
 
 /* ===== CHIPS DE SEDE ===== */
 .sede-chip{display:inline-flex;align-items:center;gap:3px;font-size:8px;padding:2px 7px;border-radius:8px;background:#f5f7f5;border:1px solid #d8e8dc;color:#555;margin-top:4px;line-height:1.4}
@@ -215,6 +227,204 @@ button:active{transform:scale(.98)}
 .tbl th{padding:7px 8px;text-align:left;background:var(--udec-green);color:#fff;font-weight:700;font-size:10px;position:sticky;top:0;z-index:1}
 .tbl td{padding:5px 8px;border-bottom:1px solid var(--udec-green-pale);vertical-align:middle}
 .tbl tr:hover td{background:var(--udec-green-pale)}
+
+/* ===== REGISTRO CALIFICADO POR FACULTAD ===== */
+.rc-container{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 3px 12px rgba(0,30,0,.06);margin-top:1rem}
+.rc-title{font-size:12px;font-weight:800;color:var(--udec-green);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;padding-left:10px;border-left:3px solid var(--udec-green)}
+.rc-title-sub{font-size:9px;color:#77848a;margin-bottom:14px;letter-spacing:.02em}
+
+/* ── KPIs: fondo pastel semántico, número dominante, sin bordes ── */
+.rc-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.rc-kpi{border:none;border-radius:12px;padding:12px 10px;text-align:center}
+.rc-kpi-v{font-size:24px;font-weight:800;line-height:1.1}
+.rc-kpi-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:3px;line-height:1.3;opacity:.85}
+.rc-kpi-total{background:var(--rc-total-bg)}
+.rc-kpi-total .rc-kpi-v{color:var(--rc-total-tx)}
+.rc-kpi-con{background:var(--rc-turq-bg)}
+.rc-kpi-con .rc-kpi-v{color:var(--rc-turq-tx)}
+.rc-kpi-proy{background:var(--rc-ambar-bg)}
+.rc-kpi-proy .rc-kpi-v{color:var(--rc-ambar-tx)}
+
+/* ── Tabla global reutiliza .tbl-wrap + .tbl ── */
+.rc-tbl-min{min-width:520px}
+.rc-th-c{text-align:center}
+/* Primera columna "Estado Actual Posgrado" a la izquierda; columnas numéricas centradas */
+.rc-summary-tbl th,
+.rc-summary-tbl td{text-align:center}
+.rc-summary-tbl th:first-child,
+.rc-summary-tbl td:first-child{text-align:left}
+.rc-txt-green{color:var(--rc-turq-tx)!important;font-weight:600}
+.rc-txt-gold{color:var(--rc-ambar-tx)!important;font-weight:600}
+.rc-txt-dark{color:var(--udec-dark);font-weight:600}
+.rc-row-total{background:var(--udec-green);color:#fff;font-weight:700}
+.rc-row-total td{border-bottom:none!important}
+
+/* ── Tarjetas por facultad: contenedor limpio, pocos bordes ── */
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px;margin-top:16px}
+.rc-card{background:#fff;border:1px solid #e3ebe5;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,30,0,.05)}
+.rc-card-head{background:#fff;padding:11px 14px;border-bottom:1px solid #eef2ee;display:flex;align-items:baseline;justify-content:space-between}
+.rc-card-name{font-size:12px;font-weight:800;color:var(--udec-green)}
+.rc-card-total{font-size:10px;color:#66736a;font-weight:600}
+.rc-card-total b{font-size:13px;color:var(--udec-dark)}
+.rc-card-body{padding:12px 14px}
+
+/* ── Visualizaciones Chart.js del indicador RC ── */
+.rc-chart-section-sub{margin-bottom:6px;font-weight:700;color:var(--udec-green);text-transform:none;letter-spacing:.02em}
+.rc-charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 16px}
+.rc-charts .rc-chart-card-dona{grid-column:1 / -1}
+.rc-chart-card{background:#fff;border:1px solid #d8e8dc;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,102,51,0.06)}
+.rc-chart-head{font-size:10px;font-weight:700;color:var(--udec-green);text-transform:uppercase;letter-spacing:.08em;padding:11px 14px;border-bottom:1px solid #eef2ee;background:#fbfdfb}
+.rc-chart-sub{font-size:9.5px;font-weight:600;color:#66776f;padding:7px 14px 0;letter-spacing:.01em}
+.rc-chart-body{position:relative;padding:12px 14px;height:260px}
+.rc-chart-body-tall{height:292px}
+.rc-chart-body-dona{height:256px;display:flex;gap:18px;align-items:center;justify-content:flex-start;padding:12px 14px}
+.rc-dona-col{position:relative;flex:0 0 200px;width:200px;height:200px;text-align:center}
+.rc-dona-col canvas{max-width:200px;max-height:200px}
+.rc-rank-col{flex:1 1 auto;min-width:0;align-self:stretch}
+.rc-rank-head{display:flex;justify-content:space-between;font-size:8.5px;font-weight:700;color:#66776f;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #eef2ee;padding:2px 0 5px;margin-bottom:4px}
+.rc-rank-head span:nth-child(1){flex:1 1 auto;text-align:left}
+.rc-rank-head span:nth-child(n+2){flex:0 0 auto}
+.rc-rank-row{display:flex;align-items:center;justify-content:space-between;padding:4px 2px;font-size:10.5px;line-height:1.1}
+.rc-rank-row+.rc-rank-row{margin-top:2px}
+.rc-rank-dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;margin-right:6px}
+.rc-rank-name{flex:1 1 auto;text-align:left;font-weight:600;color:var(--udec-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-rank-num{flex:0 0 auto;text-align:right;min-width:16px;font-weight:800;color:var(--udec-green)}
+.rc-rank-pct{flex:0 0 auto;text-align:right;min-width:42px;font-weight:600;color:#66776f}
+.esf-rank-split{display:flex;gap:14px;align-items:stretch;justify-content:flex-start}
+.rc-esf-rc{position:relative;flex:1 1 auto;min-width:0;height:100%;min-height:200px;display:flex;flex-direction:column}
+.rc-esf-rc canvas{flex:1 1 auto;min-height:170px}
+/* Composicion dona de maestrias: ranking compacto al centro + grafico RC 100% apilado a la derecha */
+.mae-rank-split{display:flex;gap:14px;align-items:stretch;justify-content:flex-start}
+.rc-mae-rc{position:relative;flex:1 1 auto;min-width:0;height:100%;min-height:200px;display:flex;flex-direction:column}
+.rc-inner-chart-head{font-size:8.5px;font-weight:700;color:var(--udec-green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.rc-mae-rc canvas{flex:1 1 auto;min-height:170px}
+.rc-rank-side{flex:0 0 150px;overflow:hidden;padding-left:12px;border-left:1px solid #eef2ee}
+.rc-doughnut-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);text-align:center;pointer-events:none;width:96px}
+.rc-doughnut-center-v{font-size:24px;font-weight:800;color:var(--udec-green);line-height:1}
+.rc-doughnut-center-l{font-size:7.5px;font-weight:600;color:#66776f;line-height:1.2;margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+
+/* ── Categorías: alto peso visual ── */
+.rc-tile{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:9px;margin-bottom:8px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.rc-tile:last-child{margin-bottom:0}
+.rc-tile:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,30,0,.10)}
+.rc-tile-label{font-size:10px;font-weight:800;color:var(--udec-dark);display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.04em}
+.rc-tile-num{font-size:18px;font-weight:800;line-height:1}
+.rc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.rc-tile-con{background:var(--rc-turq-bg)}
+.rc-tile-con .rc-dot{background:var(--rc-turq-tx)}
+.rc-tile-con .rc-tile-num{color:var(--rc-turq-tx)}
+.rc-tile-sin{background:var(--rc-ambar-bg)}
+.rc-tile-sin .rc-dot{background:var(--rc-ambar-tx)}
+.rc-tile-sin .rc-tile-num{color:var(--rc-ambar-tx)}
+
+/* ── Modal detalle reutiliza .modal-overlay + .modal ── */
+.rc-overlay{position:fixed;inset:0;background:rgba(0,30,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:2rem;overflow-y:auto;cursor:pointer}
+.rc-overlay > *{cursor:default}
+.modal.rc-modal{max-width:960px;width:100%}
+.rc-modal-sub{font-weight:400;font-size:11px;opacity:.9}
+.rc-close{background:#f0f4f2;border:1px solid #cfddd5;color:var(--udec-green);font-size:18px;font-weight:700;line-height:1;cursor:pointer;border-radius:7px;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;margin-left:auto;transition:background .15s,border-color .15s;flex-shrink:0}
+.rc-close:hover{background:#e2ece6;border-color:var(--udec-green)}
+.rc-close-bottom{background:var(--udec-green);color:#fff;border:none;font-size:12px;font-weight:700;padding:9px 22px;border-radius:7px;cursor:pointer;transition:background .15s;margin-top:14px}
+.rc-close-bottom:hover{background:var(--udec-green-mid)}
+.rc-count{font-size:11px;color:#555;margin-bottom:8px;line-height:1.7}
+.rc-count-stat{display:inline-block;vertical-align:baseline;white-space:nowrap}
+.rc-count b{font-size:17px;font-weight:800;color:var(--udec-green);line-height:1}
+.rc-count .rc-count-lbl{font-size:10px;font-weight:600;color:#555;margin-left:3px}
+.rc-count-sep{color:#c9d6cd;margin:0 6px;font-weight:700}
+.rc-note{font-size:9px;color:#66736a;background:var(--rc-ambar-bg);border:1px solid #ecdfc0;border-radius:6px;padding:6px 10px;margin-bottom:10px;line-height:1.4}
+.rc-link{color:#0563C1;font-size:9px}
+.rc-nolink{color:var(--rc-ambar-tx);font-size:9px;font-weight:600}
+.rc-modal-body{max-height:70vh;overflow:auto;padding-bottom:2px}
+.rc-modal-foot{display:flex;justify-content:flex-end;padding:0 6px 2px}
+
+/* Tabla del detalle: usa ancho real, sin ancho mínimo rígido, wrap de textos */
+.rc-detail-tbl{min-width:0!important;width:100%}
+.rc-detail-tbl th,.rc-detail-tbl td{white-space:normal!important;vertical-align:top;word-break:break-word}
+.rc-detail-tbl .rc-link{white-space:nowrap}
+
+/* Badges de estado en el modal de RC (una fila consolidada por especialización) */
+.rc-estado{display:inline-block;background:#f0f4f2;color:#4a5850;border:1px solid #dfe8e2;border-radius:10px;padding:1px 8px;font-size:9px;font-weight:600;line-height:1.5;white-space:nowrap}
+.rc-estado+.rc-estado{margin-left:4px}
+.rc-estado.rc-estado-negado{background:#FCEBEB;color:#A32D2D;border-color:#f0c9c9;font-weight:700}
+
+/* Fila consolidada con estado Negado MEN: fondo rojo muy suave (solo esa fila) */
+.rc-row-negado{background:#FFF5F5}
+.rc-row-negado td{background:transparent}
+.rc-detail-tbl .rc-row-negado:hover td,.rc-row-negado:hover td{background:#fff0f0!important}
+
+/* Filtro por tipo dentro del modal de Líneas de Profundización */
+.rc-filter-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.rc-filter-chip{background:#fff;border:1px solid #d8e8dc;color:var(--udec-green);font-size:10px;font-weight:700;padding:5px 12px;border-radius:16px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;font-family:inherit}
+.rc-filter-chip:hover{border-color:var(--udec-green)}
+.rc-filter-chip.on{background:var(--udec-green);color:#fff;border-color:var(--udec-green)}
+
+/* ===== MAESTRÍAS POR FACULTAD — Orientación de la Maestría ===== */
+.mae-container{margin-top:1.5rem}
+.mae-kpi-inv{background:var(--rc-azul-bg)}
+.mae-kpi-inv .rc-kpi-v{color:var(--rc-azul-tx)}
+.mae-kpi-prof{background:var(--rc-verde-bg)}
+.mae-kpi-prof .rc-kpi-v{color:var(--rc-verde-tx)}
+.mae-kpi-sin{background:#f0efed}
+.mae-kpi-sin .rc-kpi-v{color:#6b6b6b}
+.mae-summary-tbl{margin-top:4px}
+.mae-click{cursor:pointer}
+.mae-click:hover{background:var(--udec-green-pale)!important}
+/* ===== MAESTRÍAS — Registro Calificado (sub-bloque RC) ===== */
+.mae-rc-sub{margin-top:1.25rem}
+.mae-rc-card{background:#fff;border:1px solid #e3eee6;border-radius:12px;padding:14px;margin-top:10px}
+.mae-rc-card .rc-title{font-size:12px}
+.mae-rc-card .rc-title-sub{font-size:9px}
+.mae-rc-kpis{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+.mae-kpi-sinrc{background:#f0efed}
+.mae-kpi-sinrc .rc-kpi-v{color:#6b6b6b}
+.mae-rc-tbl{margin-top:10px}
+.mae-rc-tbl .rc-row-total td{font-weight:800;border-top:2px solid #d8e8dc}
+.mae-rc-tbl .rc-row-total .rc-th-c{color:var(--udec-dark)}
+.mae-rc-sin{color:#6b6b6b!important;font-weight:600}
+.mae-rc-click{cursor:pointer}
+.mae-rc-click:hover{background:var(--udec-green-pale)!important}
+.rc-kpi-click{cursor:pointer;transition:box-shadow .15s,transform .15s}
+.rc-kpi-click:hover{box-shadow:0 0 0 2px var(--udec-green-pale);transform:translateY(-1px)}
+.rc-nolink{color:#848a88;font-size:10px;font-style:italic}
+.rc-link{color:var(--rc-turq-tx);font-weight:700;text-decoration:underline}
+.rc-sum-click{cursor:pointer}
+.rc-sum-click:hover{background:var(--udec-green-pale)!important}
+.cell-click{cursor:pointer}
+.cell-click:hover{background:var(--udec-green-pale)!important}
+.mae-cell-inv{color:var(--rc-azul-tx)!important;font-weight:700}
+.mae-cell-prof{color:var(--rc-verde-tx)!important;font-weight:700}
+.mae-cell-sin{color:#6b6b6b!important;font-weight:700}
+.mae-container .rc-kpi-row{grid-template-columns:repeat(4,1fr)}
+/* El sub-bloque RC de maestrías tiene EXACTAMENTE 3 KPIs: anula el 4-col de
+   .mae-container (misma especificidad, declarado después) y reparte las 3
+   tarjetas de forma uniforme a lo largo de toda la fila. */
+.mae-container .mae-rc-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+/* ===== ESPECIALIZACIONES POR FACULTAD — A2 ponderado ===== */
+.esf-container{margin-top:1.5rem}
+
+/* ===== LÍNEAS DE PROFUNDIZACIÓN (bloque independiente de Registro Calificado) ===== */
+.prof-container{margin-top:1.5rem}
+
+@media (max-width:768px){
+  .rc-kpi-row{grid-template-columns:repeat(3,1fr)}
+  .rc-overlay{padding:1rem}
+  .rc-grid{grid-template-columns:1fr}
+  .rc-charts{grid-template-columns:1fr}
+  .rc-charts .rc-chart-card-dona{grid-column:auto}
+  .rc-chart-body-dona{flex-direction:column;align-items:center;height:auto}
+  .rc-dona-col{margin-bottom:8px}
+  .rc-rank-col{width:100%}
+  .rc-esf-rc{height:230px}
+  .mae-rank-split{flex-direction:column;align-items:stretch;width:100%}
+  .esf-rank-split{flex-direction:column;align-items:stretch;width:100%}
+  .rc-mae-rc{height:230px}
+  .rc-rank-side{flex:1 1 auto;border-left:none;border-top:1px solid #eef2ee;padding-left:0;padding-top:8px;margin-top:6px}
+}
+
+@media (max-width:480px){
+  .mae-container .mae-rc-kpis{grid-template-columns:1fr}
+}
 
 /* ===== VISTA POR SEDE ===== */
 .sede-wrap{padding:1rem;background:var(--udec-green-pale);border-radius:0 0 8px 8px;border:1px solid var(--udec-border);border-top:none}
@@ -345,6 +555,19 @@ button:active{transform:scale(.98)}
   .sede-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))!important;gap:4px!important}
   .sede-card{page-break-inside:avoid;break-inside:avoid;padding:5px 7px!important;border-top-width:2px!important}
   .sede-name{font-size:10px!important}
+
+  /* ── REGISTRO CALIFICADO ── */
+  .rc-tbl-min{min-width:0!important}
+  .rc-grid{grid-template-columns:1fr 1fr!important;gap:4px!important}
+  .rc-card{page-break-inside:avoid;break-inside:avoid}
+  .rc-tile:hover{transform:none!important;box-shadow:none!important}
+  .rc-container{padding:6px 8px!important;border-radius:8px!important;break-inside:avoid;box-shadow:none!important}
+  .rc-kpi-v{font-size:16px!important}
+  .rc-kpi-l{font-size:7px!important}
+  .rc-tile-num{font-size:13px!important}
+  .rc-overlay{display:none!important}
+  .rc-charts{display:none!important}
+  .rc-chart-section-sub{display:none!important}
 
   /* ── INDICADORES ── */
   #indicadores-content div[style*="overflow-x"][style*="auto"]{overflow:visible!important;width:100%!important}
