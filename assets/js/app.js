@@ -72,6 +72,8 @@ window.App = {
   // Indicadores
   renderIndicadores: renderIndicadores, renderIndicadorRCDetalle: renderIndicadorRCDetalle,
   renderIndicadorProfDetalle: renderIndicadorProfDetalle, profSetTipo: profSetTipo,
+  renderIndicadorMaeDetalle: renderIndicadorMaeDetalle, maeSetTipo: maeSetTipo,
+  renderIndicadorMaeRcDetalle: renderIndicadorMaeRcDetalle,
   // Almacenamiento
   loadDB: loadDB, saveDB: saveDB, downloadHTML: downloadHTML, downloadDB: downloadDB, resetDB: resetDB,
   backupDB: backupDB, restoreDB: restoreDB,
