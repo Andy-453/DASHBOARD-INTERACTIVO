@@ -54,6 +54,57 @@ var __ACTIONS = {
     var o = document.getElementById('rc-detail-overlay');
     if(o && o.parentNode) document.body.removeChild(o);
   },
+  'prof-show-detail': function(b){
+    renderIndicadorProfDetalle(b.getAttribute('data-filter'));
+  },
+  'prof-close-detail': function(){
+    var o = document.getElementById('prof-detail-overlay');
+    if(o && o.parentNode) document.body.removeChild(o);
+  },
+  'prof-filter-type': function(b){
+    profSetTipo(b.getAttribute('data-tipo'));
+  },
+  'mae-show-detail': function(b){
+    renderIndicadorMaeDetalle(b.getAttribute('data-filter'));
+  },
+  'mae-close-detail': function(){
+    var o = document.getElementById('mae-detail-overlay');
+    if(o && o.parentNode) document.body.removeChild(o);
+  },
+  'mae-filter-type': function(b){
+    maeSetTipo(b.getAttribute('data-tipo'));
+  },
+  'mae-rc-show-detail': function(b){
+    renderIndicadorMaeRcDetalle(b.getAttribute('data-filter'));
+  },
+  'mae-rc-close-detail': function(){
+    var o = document.getElementById('mae-rc-detail-overlay');
+    if(o && o.parentNode) document.body.removeChild(o);
+  },
+  'esf-show-detail': function(b){
+    renderIndicadorEsfDetalle(b.getAttribute('data-filter'));
+  },
+  'esf-close-detail': function(){
+    var o = document.getElementById('esf-detail-overlay');
+    if(o && o.parentNode) document.body.removeChild(o);
+  },
+  'pre-show-detail': function(b){ renderIndicadorPreDetalle(b.getAttribute('data-filter')); },
+  'pre-close-detail': function(){
+    var o = document.getElementById('pre-detail-overlay');
+    if(o && o.parentNode) document.body.removeChild(o);
+  },
+  'doc-show-detail': function(b){ renderIndicadorDocDetalle(b.getAttribute('data-filter')); },
+  'doc-close-detail': function(){
+    var o = document.getElementById('doc-detail-overlay');
+    if(o && o.parentNode) document.body.removeChild(o);
+  },
+  'posg-show-detail': function(b){ renderPosgDetalle(b.getAttribute('data-filter')); },
+  'posg-show-detail-vigente': function(b){ renderPosgDetalle(b.getAttribute('data-filter'), 'V'); },
+  'posg-show-detail-proyectada': function(b){ renderPosgDetalle(b.getAttribute('data-filter'), 'P'); },
+  'posg-close-detail': function(){
+    var o = document.getElementById('posg-detail-overlay');
+    if(o && o.parentNode) document.body.removeChild(o);
+  },
   'toggle-sedes-list': function(b){ toggleSedesList(b.getAttribute('data-pid')); },
   'select-sede-prog': function(b){ setSedeProg(b.getAttribute('data-pid'), b.getAttribute('data-sede')); },
   'toggle-mae': function(b){ toggleMaeNode(b.getAttribute('data-key')); },
